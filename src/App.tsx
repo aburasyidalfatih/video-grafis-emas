@@ -1,20 +1,46 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import { GoogleGenAI } from '@google/genai';
-import { FileJson, Sparkles, Copy, CheckCircle2, Video, AlertCircle, Lightbulb, Wand2, Key, X, Check, Search, ChevronRight, ChevronLeft, Compass, Filter, ArrowRight, Film, Volume2, Layers, Download, MessageSquare } from 'lucide-react';
+import { FileJson, Sparkles, Copy, CheckCircle2, Video, AlertCircle, Lightbulb, Wand2, Key, X, Check, Search, ChevronRight, ChevronLeft, Compass, Filter, ArrowRight, Film, Volume2, Layers, Download, MessageSquare, Mic } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 import { CONTENT_IDEAS, GOLDGEN_TOPICS, formatTopicToIdea, GoldgenTopic } from './ideas';
-import { ScenePrompt, VideoPayload } from './types';
+import { ScenePrompt, VideoPayload, VoiceOver } from './types';
+
+export const VOICE_PERSONAS = [
+  {
+    id: 'geologist',
+    name: 'Veteran Field Geologist',
+    subtitle: 'Deep baritone, authoritative, documentary pace (~135 WPM)',
+    gender_tone: 'Deep warm baritone, calm authoritative intrigue, deliberate documentary cadence',
+    tts: "ElevenLabs: 'Adam' (Narrator) / OpenAI: 'Onyx'",
+  },
+  {
+    id: 'naturalist',
+    name: 'Curious Naturalist',
+    subtitle: 'Warm mid-range, conversational, discovery-driven (~140 WPM)',
+    gender_tone: 'Warm natural resonance, conversational intrigue, crisp enunciation',
+    tts: "ElevenLabs: 'George' / OpenAI: 'Echo'",
+  },
+  {
+    id: 'storyteller',
+    name: 'Expedition Storyteller',
+    subtitle: 'Gravelly, cinematic pauses, high retention (~130 WPM)',
+    gender_tone: 'Low gravelly texture, cinematic dramatic pauses, captivating mystery',
+    tts: "ElevenLabs: 'Marcus' / OpenAI: 'Fable'",
+  },
+] as const;
 
 const DEFAULT_TOPIC = `Reading The River: Gold drops where water slows down.
-1. Scene 1: 3D isometric cross-section simulation of a river bend showing hydraulic velocity gradients, with glowing gold particles settling into the low-pressure inside gravel bar.
-2. Scene 2: Dynamic macro camera dive behind a giant submerged river boulder, highlighting turbulent eddy currents where high-density gold nuggets drop out of suspension.
-3. Scene 3: Ultra-detailed bedrock crack visualization with kinetic infographic overlays illustrating natural riffle action trapping coarse gold nuggets deep in vertical schist crevices.`;
+1. Scene 1 (The Hook): Photorealistic cinematic cross-section of a roaring mountain river bend under golden hour sunlight, revealing authentic hydraulic sediment flow where heavy, dense raw gold flakes naturally settle into the low-pressure gravel bar.
+2. Scene 2 (The Core): High-speed underwater macro dive through crystal-clear mountain water behind a massive mossy river boulder, capturing turbulent eddy currents where heavy raw gold nuggets drop out of suspension into dark riverbed pockets.
+3. Scene 3 (The Loop): Extreme macro physical inspection of natural bedrock crevices, capturing coarse raw gold trapped in vertical schist riffles under dappled sunlight caustics, rising back up to the river surface to complete the loop.`;
 
 const CATEGORIES = ['All', 'River & Placer', 'Rocks & Minerals', 'Equipment & Tools', 'Geology & Formations', 'History & Field Knowledge'] as const;
 
 export default function App() {
   const [userApiKey, setUserApiKey] = useState(() => localStorage.getItem('user_gemini_api_key') || '');
   const [showApiSettings, setShowApiSettings] = useState(false);
+  const [selectedVoicePersona, setSelectedVoicePersona] = useState<string>('geologist');
+  const [copiedVoiceOver, setCopiedVoiceOver] = useState(false);
   
   // Topic catalog modal states
   const [showTopicCatalog, setShowTopicCatalog] = useState(false);
@@ -116,19 +142,26 @@ export default function App() {
     setError(null);
 
     try {
+      const activePersonaObj = VOICE_PERSONAS.find((p) => p.id === selectedVoicePersona) || VOICE_PERSONAS[0];
       const ai = getAiInstance();
       const response = await ai.models.generateContent({
         model: 'gemini-2.5-flash',
-        contents: `You are an expert director for viral short-form educational videos (TikTok/Reels/Shorts).
-        Based on the following idea, create a detailed, highly visual video concept structured exactly into 3 scenes. Each scene is 8 seconds long.
-        Write the descriptions in English so it works best for AI video generators. Focus on ultra-modern infographic storytelling, sleek UI/HUD overlays, dynamic camera movements, and trendy kinetic typography. Also, include a brief voice-over script for each scene.
+        contents: `You are an expert cinematic director for viral, photorealistic short-form educational videos (TikTok/Reels/Shorts).
+        Based on the following idea, create a detailed, highly visual video concept structured exactly into 3 sequential scenes (8 seconds each, 24 seconds total).
+        Write the descriptions in English for high-end AI video generators (Runway Gen-3, Sora, Kling, Veo).
 
-        CRITICAL REQUIREMENT:
-        - All output (Title, Visuals, and Voice Over scripts) MUST be in English, even if the input Idea is written in another language (e.g. Indonesian). Do not output any Indonesian in the video title, visuals, or voice over text.
+        CRITICAL VISUAL STYLE (REALISTIC & GROUNDED):
+        - Focus on photorealistic nature & geological realism: natural sunlight (golden hour, dappled light through crystal-clear mountain water), authentic sediment physics, tangible mineral textures (raw 24k placer gold luster, oxidized quartz, fractured bedrock schist).
+        - STRICTLY AVOID: sci-fi holograms, glowing futuristic neon HUDs, cybernetic telemetry overlays, or artificial tech animations. Ground the story in realistic physical cross-sections, macro physical close-ups, and natural documentary cinematography (National Geographic / BBC Earth style).
 
-        CRITICAL VIRALITY RULES:
-        - Scene 1 MUST start with a strong "Curiosity Hook" (e.g., "The hidden secret of...", "What they don't tell you about...").
-        - Scene 3 MUST end with a visual/audio setup that seamlessly loops back to the start of Scene 1.
+        CRITICAL VIRALITY RULES (FIRST-SECOND HOOK & SEAMLESS LOOP):
+        - Scene 1 MUST start with an immediate high-impact curiosity hook in the first 1-2 seconds (e.g., an extreme macro reveal of raw gold trapped in jagged riverbed cracks, a dramatic water plunge into a hidden eddy current, or an astonishing tangible contrast).
+        - The voice-over hook must provoke instant curiosity and stop the viewer from scrolling.
+        - Scene 3 MUST end with a natural physical camera transition that seamlessly loops back to the opening framing of Scene 1.
+
+        CRITICAL VOICE-OVER PERSONA CONSISTENCY:
+        - Consistent Narrator Persona across all 3 scenes: "${activePersonaObj.name}" (${activePersonaObj.gender_tone}).
+        - Word budget per scene: strictly 18 to 22 words so the voice-over pacing is natural, deliberate, and fits perfectly in 8 seconds.
 
         Idea: ${idea}
         
@@ -136,14 +169,14 @@ export default function App() {
         [Title of the Video]
         
         1. Scene 1 (The Hook):
-           - Visuals: [Detailed visual description emphasizing modern 3D motion graphics...]
-           - Voice Over: [Spoken hook script that fits an 8-second duration...]
+           - Visuals: [Detailed photorealistic visual description emphasizing tangible macro geology, natural lighting, and an immediate visual hook...]
+           - Voice Over: [Spoken hook script by ${activePersonaObj.name} strictly 18-22 words grabbing attention in the first 2 seconds...]
         2. Scene 2 (The Core):
-           - Visuals: [Detailed visual description emphasizing modern 3D motion graphics...]
-           - Voice Over: [Spoken script that fits an 8-second duration...]
+           - Visuals: [Detailed photorealistic visual description demonstrating the physical mechanism or geological principle...]
+           - Voice Over: [Spoken script by ${activePersonaObj.name} strictly 18-22 words...]
         3. Scene 3 (The Loop):
-           - Visuals: [Detailed visual description emphasizing modern 3D motion graphics...]
-           - Voice Over: [Spoken script that fits an 8-second duration...]`,
+           - Visuals: [Detailed photorealistic visual description concluding the insight and ending in a camera position that loops into Scene 1...]
+           - Voice Over: [Spoken script by ${activePersonaObj.name} strictly 18-22 words...]`,
       });
 
       if (response.text) {
@@ -164,11 +197,12 @@ export default function App() {
     setScenes(null);
 
     try {
+      const activePersonaObj = VOICE_PERSONAS.find((p) => p.id === selectedVoicePersona) || VOICE_PERSONAS[0];
       const ai = getAiInstance();
       const response = await ai.models.generateContent({
         model: 'gemini-2.5-flash',
-        contents: `You are an expert AI video generation prompt engineer and social media director.
-Create a production payload for a viral 3-scene educational video based on the following topic.
+        contents: `You are an elite AI video generation prompt engineer and cinematic documentary director.
+Create a production payload for a viral, photorealistic 3-scene educational video based on the following topic.
 
 Topic: ${topic}
 
@@ -176,12 +210,28 @@ CRITICAL RULES:
 1. Return a single JSON object with THREE root keys: "scenes", "social_media_caption", and "hashtags".
 2. "scenes" MUST be an array of EXACTLY 3 sequential scenes (Scene 1: Hook, Scene 2: Core, Scene 3: Loop), 8 seconds each.
 3. PURITY OF VIDEO PROMPT: Inside "scenes", DO NOT include any social media captions, hashtags, project titles, marketing copy, or emojis. Every scene object must be strictly technical AI video generator instructions.
-4. Each scene in "scenes" MUST have the EXACT SAME uniform JSON structure so each scene can be used independently by Runway Gen-3, Sora, Kling, Veo, or Luma.
-5. STYLE CONSISTENCY: Every scene must share the same locked aesthetic, color palette, and render parameters in its "style_consistency" object.
-6. CONTINUITY: Every scene must define its "continuity" object with timeline_segment, visual_anchor, transition_in, and transition_out so the clips connect seamlessly and Scene 3 loops back to Scene 1.
-7. LANGUAGE: All output text (prompts, camera moves, text labels, voice-overs, caption) MUST be in English.
-8. "social_media_caption": Write an engaging, high-retention English caption tailored for TikTok, Instagram Reels, and YouTube Shorts (include emojis, curiosity hook, and a quick call-to-action).
-9. "hashtags": An array of 6-8 trending hashtags (e.g. ["#GoldProspecting", "#GoldMining", "#GeologyFacts", "#GoldNugget", "#MiningLife", "#EarthScience"]).
+4. UNIFORM SCHEMA: Each scene in "scenes" MUST have the EXACT SAME uniform JSON structure so each scene can be used independently by Runway Gen-3, Sora, Kling, Veo, or Luma.
+5. PHOTOREALISTIC STYLE CONSISTENCY (STRICTLY NO TECH/SCI-FI HUDs):
+   - Every scene must share the same locked realistic aesthetic, color palette, and render parameters in its "style_consistency" object.
+   - "visual_aesthetic": "Photorealistic cinematic documentary, 8K ultra-detailed geological simulation, natural physical macro cinematography, authentic mineral and rock textures, grounded tactile realism. Strictly NO futuristic holograms, NO sci-fi neon HUDs, NO cybernetic telemetry overlays, NO digital glitches."
+   - "color_palette": "Natural raw 24k placer gold (#D4AF37), deep wet slate & bedrock gray (#2A2E35), crystal-clear mountain water (#4A7C59 / #3D5A80), warm natural sunlight (#FFF2B2)"
+   - "render_and_lighting": "Cinematic 35mm anamorphic lens realism, natural golden hour / dappled water caustics, physically-based rendering (PBR), shallow depth of field, authentic macro lens bokeh, high dynamic range."
+6. CONTINUITY & SEAMLESS TRANSITIONS: Every scene must define its "continuity" object with timeline_segment, visual_anchor, transition_in, and transition_out so the clips connect seamlessly on physical action and Scene 3 loops back to Scene 1.
+7. FIRST-SECOND AUDIENCE RETENTION:
+   - Scene 1's visual prompt and camera movement MUST grab the audience in the first 0-2 seconds with intense visual curiosity, dynamic physical motion, and tangible macro detail.
+8. MINIMALIST DOCUMENTARY LABELS: "on_screen_text_labels" must be clean, subtle documentary lower-third text (e.g. "INSIDE BEND: LOW VELOCITY"), NOT futuristic neon HUD codes.
+9. ORGANIC SOUND EFFECTS: "sound_effects" must be rich organic Foley design (e.g. rushing mountain river, underwater low rumble, crisp clink of heavy raw gold nugget on bedrock, gravel crunch), NOT sci-fi lasers or digital beeps.
+10. VOICE-OVER CHARACTER & DELIVERY CONSISTENCY:
+    - Every scene MUST use the EXACT SAME narrator character for seamless audio continuity:
+      * "persona": "${activePersonaObj.name}"
+      * "tone_and_delivery": "${activePersonaObj.gender_tone}"
+      * "speaking_rate": "135 WPM (~2.3 words/sec, max 22 words for 8s)"
+      * "recommended_tts": "${activePersonaObj.tts}"
+      * "script": Spoken English narration script strictly budgeted to 18-22 words for 8 seconds.
+    - Monologue Flow: The voice-over scripts across Scene 1, 2, and 3 must connect naturally as one cohesive, compelling monologue.
+11. LANGUAGE: All output text (prompts, camera moves, text labels, voice-overs, caption) MUST be in English.
+12. "social_media_caption": Write an engaging, high-retention English caption tailored for TikTok, Instagram Reels, and YouTube Shorts (include emojis, curiosity hook, and a quick call-to-action).
+13. "hashtags": An array of 6-8 trending hashtags (e.g. ["#GoldProspecting", "#GoldMining", "#GeologyFacts", "#GoldNugget", "#MiningLife", "#EarthScience"]).
 
 Respond ONLY with a valid JSON object matching this schema:
 {
@@ -189,62 +239,80 @@ Respond ONLY with a valid JSON object matching this schema:
     {
       "scene_number": 1,
       "duration": "8s",
-      "visual_prompt": "Extremely detailed generative video prompt in English describing 3D visuals, motion, lighting, and environment...",
-      "camera_movement": "Specific cinematic camera trajectory instruction in English...",
+      "visual_prompt": "Photorealistic cinematic 8k macro prompt in English describing natural environment, authentic mineral textures, physical fluid hydrodynamics, and realistic lighting...",
+      "camera_movement": "Specific cinematic camera trajectory instruction in English with immediate dynamic plunge or macro reveal...",
       "style_consistency": {
-        "visual_aesthetic": "Ultra-modern 3D motion graphics, sleek HUD infographic overlays, kinetic typography, glowing accents, trendy glassmorphism",
-        "color_palette": "Luminous 24k gold (#FFD700), dark slate riverbed (#1E232A), electric cyan telemetry (#00E5FF)",
-        "render_and_lighting": "Octane render aesthetic, ray-traced subsurface scattering, volumetric rim lighting, 8k texture fidelity"
+        "visual_aesthetic": "Photorealistic cinematic documentary, 8K ultra-detailed geological simulation, natural physical macro cinematography, authentic mineral and rock textures, grounded tactile realism. Strictly NO futuristic holograms, NO sci-fi neon HUDs, NO cybernetic telemetry overlays.",
+        "color_palette": "Natural raw 24k placer gold (#D4AF37), deep wet slate & bedrock gray (#2A2E35), crystal-clear mountain water (#4A7C59 / #3D5A80), warm natural sunlight (#FFF2B2)",
+        "render_and_lighting": "Cinematic 35mm anamorphic lens realism, natural golden hour / dappled water caustics, physically-based rendering (PBR), shallow depth of field, authentic macro lens bokeh, high dynamic range"
       },
       "continuity": {
         "timeline_segment": "0:00 - 0:08 (The Hook)",
-        "visual_anchor": "Establishing baseline isometric terrain and locked 24k gold material shader",
-        "transition_in": "Dynamic hook plunge into scene",
-        "transition_out": "Camera tilts down dynamically toward a massive river boulder, locking onto downstream eddy current"
+        "visual_anchor": "Establishing baseline photorealistic riverbed terrain and authentic raw 24k gold mineral luster",
+        "transition_in": "Instant high-speed macro plunge into scene grabbing attention in second 1",
+        "transition_out": "Camera tilts down smoothly toward a massive submerged river boulder, tracking downstream eddy currents"
       },
-      "on_screen_text_labels": ["LABEL 1", "LABEL 2"],
-      "sound_effects": ["SFX 1", "SFX 2"],
-      "voice_over_script": "Spoken voice-over script in English paced for 8 seconds."
+      "on_screen_text_labels": ["INSIDE BEND: LOW VELOCITY", "GOLD DEPOSITION ZONE"],
+      "sound_effects": ["Rushing mountain water stream", "Sub-bass underwater turbulence"],
+      "voice_over": {
+        "persona": "${activePersonaObj.name}",
+        "tone_and_delivery": "${activePersonaObj.gender_tone}",
+        "speaking_rate": "135 WPM (~2.3 words/sec, max 22 words for 8s)",
+        "recommended_tts": "${activePersonaObj.tts}",
+        "script": "Spoken curiosity hook in English strictly budgeted to 18-22 words for 8 seconds."
+      }
     },
     {
       "scene_number": 2,
       "duration": "8s",
-      "visual_prompt": "Extremely detailed generative video prompt in English describing 3D visuals, motion, lighting, and environment...",
+      "visual_prompt": "Photorealistic cinematic 8k macro prompt in English describing natural environment, authentic mineral textures, physical fluid hydrodynamics, and realistic lighting...",
       "camera_movement": "Specific cinematic camera trajectory instruction in English...",
       "style_consistency": {
-        "visual_aesthetic": "Ultra-modern 3D motion graphics, sleek HUD infographic overlays, kinetic typography, glowing accents, trendy glassmorphism",
-        "color_palette": "Luminous 24k gold (#FFD700), dark slate riverbed (#1E232A), electric cyan telemetry (#00E5FF)",
-        "render_and_lighting": "Octane render aesthetic, ray-traced subsurface scattering, volumetric rim lighting, 8k texture fidelity"
+        "visual_aesthetic": "Photorealistic cinematic documentary, 8K ultra-detailed geological simulation, natural physical macro cinematography, authentic mineral and rock textures, grounded tactile realism. Strictly NO futuristic holograms, NO sci-fi neon HUDs, NO cybernetic telemetry overlays.",
+        "color_palette": "Natural raw 24k placer gold (#D4AF37), deep wet slate & bedrock gray (#2A2E35), crystal-clear mountain water (#4A7C59 / #3D5A80), warm natural sunlight (#FFF2B2)",
+        "render_and_lighting": "Cinematic 35mm anamorphic lens realism, natural golden hour / dappled water caustics, physically-based rendering (PBR), shallow depth of field, authentic macro lens bokeh, high dynamic range"
       },
       "continuity": {
         "timeline_segment": "0:08 - 0:16 (The Core)",
-        "visual_anchor": "Maintains identical water fluid shaders and bedrock textures from Scene 1",
-        "transition_in": "Camera matches the downward tilt from Scene 1, penetrating the water surface behind the boulder",
-        "transition_out": "Camera pushes deep underwater, focusing into razor-sharp bedrock crevices"
+        "visual_anchor": "Maintains identical crystal-clear water caustics and wet bedrock textures from Scene 1",
+        "transition_in": "Seamless match cut matching downward camera momentum, penetrating water behind boulder",
+        "transition_out": "Camera pushes deep into submerged schist crevices where current drops to near zero"
       },
-      "on_screen_text_labels": ["LABEL 1", "LABEL 2"],
-      "sound_effects": ["SFX 1", "SFX 2"],
-      "voice_over_script": "Spoken voice-over script in English paced for 8 seconds."
+      "on_screen_text_labels": ["BOULDER EDDY CURRENT", "HEAVY MINERAL DROPOUT"],
+      "sound_effects": ["Muffled underwater rush", "Heavy mineral settling clatter"],
+      "voice_over": {
+        "persona": "${activePersonaObj.name}",
+        "tone_and_delivery": "${activePersonaObj.gender_tone}",
+        "speaking_rate": "135 WPM (~2.3 words/sec, max 22 words for 8s)",
+        "recommended_tts": "${activePersonaObj.tts}",
+        "script": "Spoken core explanation script in English strictly budgeted to 18-22 words for 8 seconds."
+      }
     },
     {
       "scene_number": 3,
       "duration": "8s",
-      "visual_prompt": "Extremely detailed generative video prompt in English describing 3D visuals, motion, lighting, and environment...",
+      "visual_prompt": "Photorealistic cinematic 8k macro prompt in English describing natural environment, authentic mineral textures, physical fluid hydrodynamics, and realistic lighting...",
       "camera_movement": "Specific cinematic camera trajectory instruction in English...",
       "style_consistency": {
-        "visual_aesthetic": "Ultra-modern 3D motion graphics, sleek HUD infographic overlays, kinetic typography, glowing accents, trendy glassmorphism",
-        "color_palette": "Luminous 24k gold (#FFD700), dark slate riverbed (#1E232A), electric cyan telemetry (#00E5FF)",
-        "render_and_lighting": "Octane render aesthetic, ray-traced subsurface scattering, volumetric rim lighting, 8k texture fidelity"
+        "visual_aesthetic": "Photorealistic cinematic documentary, 8K ultra-detailed geological simulation, natural physical macro cinematography, authentic mineral and rock textures, grounded tactile realism. Strictly NO futuristic holograms, NO sci-fi neon HUDs, NO cybernetic telemetry overlays.",
+        "color_palette": "Natural raw 24k placer gold (#D4AF37), deep wet slate & bedrock gray (#2A2E35), crystal-clear mountain water (#4A7C59 / #3D5A80), warm natural sunlight (#FFF2B2)",
+        "render_and_lighting": "Cinematic 35mm anamorphic lens realism, natural golden hour / dappled water caustics, physically-based rendering (PBR), shallow depth of field, authentic macro lens bokeh, high dynamic range"
       },
       "continuity": {
         "timeline_segment": "0:16 - 0:24 (The Loop & Payoff)",
-        "visual_anchor": "Continues microscopic underwater view; identical 24k gold reflectance",
-        "transition_in": "Locks onto bedrock fissure riffle trap",
-        "transition_out": "Rapid camera rise breaking through water surface, aligning with Scene 1's starting aerial angle for an infinite visual loop"
+        "visual_anchor": "Extreme macro view of coarse gold nuggets resting in natural schist riffle trap",
+        "transition_in": "Locks onto deep bedrock crevice trap",
+        "transition_out": "Camera swoops upward breaking surface water, re-aligning with Scene 1's starting aerial angle for an infinite visual loop"
       },
-      "on_screen_text_labels": ["LABEL 1", "LABEL 2"],
-      "sound_effects": ["SFX 1", "SFX 2"],
-      "voice_over_script": "Spoken voice-over script in English paced for 8 seconds."
+      "on_screen_text_labels": ["NATURAL BEDROCK RIFFLE", "COARSE GOLD TRAP"],
+      "sound_effects": ["Crisp tactile metallic clink of gold against bedrock", "Water surface breach splash"],
+      "voice_over": {
+        "persona": "${activePersonaObj.name}",
+        "tone_and_delivery": "${activePersonaObj.gender_tone}",
+        "speaking_rate": "135 WPM (~2.3 words/sec, max 22 words for 8s)",
+        "recommended_tts": "${activePersonaObj.tts}",
+        "script": "Spoken payoff script in English strictly budgeted to 18-22 words for 8 seconds ending with loop lead-in."
+      }
     }
   ],
   "social_media_caption": "Engaging caption in English for TikTok, Instagram Reels, and YouTube Shorts summarizing the secret.",
@@ -281,25 +349,33 @@ Respond ONLY with a valid JSON object matching this schema:
       // Normalize all scenes to guarantee 100% identical and robust JSON format across scenes
       const normalizedScenes: ScenePrompt[] = rawScenes.map((s: any, idx: number) => {
         const sceneNum = s.scene_number || (idx + 1);
+        const voScript = s.voice_over?.script || s.voice_over_script || '';
         return {
           scene_number: sceneNum,
           duration: s.duration || '8s',
           visual_prompt: s.visual_prompt || s.visual_description || '',
-          camera_movement: s.camera_movement || 'Smooth cinematic tracking camera.',
+          camera_movement: s.camera_movement || 'Smooth cinematic tracking camera with natural depth of field.',
           style_consistency: {
-            visual_aesthetic: s.style_consistency?.visual_aesthetic || 'Ultra-modern 3D motion graphics, sleek HUD infographic overlays, kinetic typography, glowing accents, trendy glassmorphism',
-            color_palette: s.style_consistency?.color_palette || 'Luminous 24k gold (#FFD700), dark slate riverbed (#1E232A), electric cyan telemetry (#00E5FF)',
-            render_and_lighting: s.style_consistency?.render_and_lighting || 'Octane render aesthetic, ray-traced subsurface scattering, volumetric rim lighting, 8k texture fidelity'
+            visual_aesthetic: s.style_consistency?.visual_aesthetic || 'Photorealistic cinematic documentary, 8K ultra-detailed geological simulation, natural physical macro cinematography, authentic mineral and rock textures, grounded tactile realism',
+            color_palette: s.style_consistency?.color_palette || 'Natural raw 24k placer gold (#D4AF37), deep wet slate & bedrock gray (#2A2E35), crystal-clear mountain water (#4A7C59 / #3D5A80), warm natural sunlight (#FFF2B2)',
+            render_and_lighting: s.style_consistency?.render_and_lighting || 'Cinematic 35mm anamorphic lens realism, natural golden hour / dappled water caustics, physically-based rendering (PBR), shallow depth of field, authentic macro lens bokeh'
           },
           continuity: {
             timeline_segment: s.continuity?.timeline_segment || `${(sceneNum - 1) * 8}s - ${sceneNum * 8}s`,
-            visual_anchor: s.continuity?.visual_anchor || 'Locked 24k gold reflectance shader and physical cross-section perspective',
-            transition_in: s.continuity?.transition_in || (sceneNum === 1 ? 'Dynamic hook plunge' : `Seamless match cut from Scene ${sceneNum - 1}`),
+            visual_anchor: s.continuity?.visual_anchor || 'Locked photorealistic mineral shader and natural riverbed perspective',
+            transition_in: s.continuity?.transition_in || (sceneNum === 1 ? 'Instant dynamic macro plunge into scene' : `Seamless match cut from Scene ${sceneNum - 1}`),
             transition_out: s.continuity?.transition_out || (sceneNum === 3 ? 'Upward swoop aligning with Scene 1 for seamless infinite loop' : `Camera pushes forward preparing handoff to Scene ${sceneNum + 1}`)
           },
           on_screen_text_labels: Array.isArray(s.on_screen_text_labels) ? s.on_screen_text_labels : [],
           sound_effects: Array.isArray(s.sound_effects) ? s.sound_effects : [],
-          voice_over_script: s.voice_over_script || ''
+          voice_over: {
+            persona: s.voice_over?.persona || activePersonaObj.name,
+            tone_and_delivery: s.voice_over?.tone_and_delivery || activePersonaObj.gender_tone,
+            speaking_rate: s.voice_over?.speaking_rate || '135 WPM (~2.3 words/sec, max 22 words for 8s)',
+            recommended_tts: s.voice_over?.recommended_tts || activePersonaObj.tts,
+            script: voScript
+          },
+          voice_over_script: voScript
         };
       });
 
@@ -360,7 +436,7 @@ Respond ONLY with a valid JSON object matching this schema:
                 Video Grafis Emas
               </h1>
               <p className="text-neutral-400 text-sm md:text-base mt-2 font-medium max-w-2xl">
-                Turn your ideas into ultra-modern, trendy 3D motion graphics prompts structured exactly as JSON for AI video models.
+                Turn your gold prospecting ideas into photorealistic cinematic 3D video prompts structured exactly as JSON for AI video models.
               </p>
             </div>
           </div>
@@ -516,6 +592,44 @@ Respond ONLY with a valid JSON object matching this schema:
                 className="w-full h-48 bg-black/40 border border-white/5 rounded-2xl p-5 text-sm leading-relaxed text-neutral-200 focus:ring-2 focus:ring-amber-500/40 focus:border-amber-500/40 transition-all outline-none resize-none placeholder:text-neutral-700 font-medium relative z-10 custom-scrollbar"
                 placeholder="Describe your highly detailed video concept here..."
               />
+
+              {/* Voice-Over Character Consistency Selector */}
+              <div className="mt-5 mb-2 space-y-2.5 relative z-10">
+                <div className="flex items-center justify-between text-xs">
+                  <span className="text-neutral-300 font-semibold flex items-center gap-1.5">
+                    <Mic className="w-3.5 h-3.5 text-amber-400" />
+                    Karakter Voice Over (Konsisten 3 Scene):
+                  </span>
+                  <span className="text-[11px] text-amber-400/80 font-mono">18-22 kata / scene (8s)</span>
+                </div>
+                <div className="grid grid-cols-1 sm:grid-cols-3 gap-2">
+                  {VOICE_PERSONAS.map((vp) => {
+                    const isSelected = selectedVoicePersona === vp.id;
+                    return (
+                      <button
+                        key={vp.id}
+                        type="button"
+                        onClick={() => setSelectedVoicePersona(vp.id)}
+                        className={`p-3 rounded-2xl border text-left transition-all relative flex flex-col justify-between ${
+                          isSelected
+                            ? 'bg-amber-500/15 border-amber-500/50 text-amber-200 shadow-[0_0_15px_rgba(245,158,11,0.15)] ring-1 ring-amber-500/30'
+                            : 'bg-black/40 border-white/5 text-neutral-400 hover:bg-white/5 hover:text-neutral-300'
+                        }`}
+                      >
+                        <div>
+                          <div className="text-xs font-bold flex items-center justify-between">
+                            <span>{vp.name}</span>
+                            {isSelected && <Check className="w-3.5 h-3.5 text-amber-400 shrink-0" />}
+                          </div>
+                          <div className="text-[10px] text-neutral-500 mt-1 line-clamp-2 leading-relaxed">
+                            {vp.subtitle}
+                          </div>
+                        </div>
+                      </button>
+                    );
+                  })}
+                </div>
+              </div>
               
               <motion.button
                 whileHover={{ scale: 1.01 }}
@@ -658,7 +772,7 @@ Respond ONLY with a valid JSON object matching this schema:
                       Per-Scene Video Prompts (JSON)
                     </span>
                     <span className="text-[11px] text-neutral-500 font-medium">
-                      Standardized 8s Scene Prompts for AI Video Generators
+                      Photorealistic 8s Cinematic Scene Prompts for AI Video Generators
                     </span>
                   </div>
                 </div>
@@ -773,13 +887,64 @@ Respond ONLY with a valid JSON object matching this schema:
                       </div>
                     </div>
 
-                    {/* Voice Over Script preview */}
-                    {activeScene.voice_over_script && (
-                      <div className="flex items-start gap-2 bg-emerald-500/[0.03] border border-emerald-500/15 p-2.5 rounded-xl">
-                        <Volume2 className="w-3.5 h-3.5 text-emerald-400 shrink-0 mt-0.5" />
-                        <p className="text-[11px] text-emerald-300/90 leading-relaxed italic">
-                          "{activeScene.voice_over_script}"
-                        </p>
+                    {/* Voice Over Script & Character Inspector */}
+                    {(activeScene.voice_over?.script || activeScene.voice_over_script) && (
+                      <div className="bg-emerald-500/[0.04] border border-emerald-500/20 rounded-2xl p-3 space-y-2">
+                        <div className="flex flex-wrap items-center justify-between gap-2 border-b border-emerald-500/10 pb-2">
+                          <div className="flex items-center gap-2">
+                            <div className="p-1 bg-emerald-500/20 rounded-lg text-emerald-400">
+                              <Mic className="w-3.5 h-3.5" />
+                            </div>
+                            <div>
+                              <div className="flex items-center gap-1.5">
+                                <span className="text-xs font-bold text-emerald-300">
+                                  {activeScene.voice_over?.persona || 'Documentary Narrator'}
+                                </span>
+                                <span className="text-[10px] px-1.5 py-0.2 rounded bg-emerald-500/15 text-emerald-300/80 font-medium">
+                                  Voice Over
+                                </span>
+                              </div>
+                              <span className="text-[10px] text-neutral-400 block mt-0.5">
+                                {activeScene.voice_over?.tone_and_delivery || 'Documentary cadence, calm authoritative'}
+                              </span>
+                            </div>
+                          </div>
+                          
+                          <div className="flex items-center gap-2">
+                            {activeScene.voice_over?.recommended_tts && (
+                              <span className="text-[10px] px-2 py-0.5 rounded-md bg-black/40 text-emerald-400/80 border border-emerald-500/20 font-mono hidden sm:inline-block">
+                                {activeScene.voice_over.recommended_tts}
+                              </span>
+                            )}
+                            <button
+                              onClick={() => {
+                                const text = activeScene.voice_over?.script || activeScene.voice_over_script || '';
+                                if (text) {
+                                  navigator.clipboard.writeText(text);
+                                  setCopiedVoiceOver(true);
+                                  setTimeout(() => setCopiedVoiceOver(false), 2000);
+                                }
+                              }}
+                              className="px-2.5 py-1 rounded-lg bg-emerald-500/15 hover:bg-emerald-500/25 text-emerald-300 text-[10px] font-semibold transition-all flex items-center gap-1 border border-emerald-500/20 active:scale-95"
+                              title="Salin naskah voice over scene ini"
+                            >
+                              {copiedVoiceOver ? <Check className="w-3 h-3 text-emerald-400" /> : <Copy className="w-3 h-3" />}
+                              <span>{copiedVoiceOver ? 'Tersalin' : 'Salin Naskah'}</span>
+                            </button>
+                          </div>
+                        </div>
+
+                        <div className="pt-0.5">
+                          <p className="text-xs sm:text-[13px] text-emerald-200/95 leading-relaxed italic font-sans bg-black/40 p-2.5 rounded-xl border border-white/5">
+                            "{activeScene.voice_over?.script || activeScene.voice_over_script}"
+                          </p>
+                          <div className="flex items-center justify-between mt-1.5 text-[10px] text-neutral-500">
+                            <span>Pacing: {activeScene.voice_over?.speaking_rate || '~135 WPM (8s)'}</span>
+                            <span>
+                              ~{(activeScene.voice_over?.script || activeScene.voice_over_script || '').split(/\s+/).filter(Boolean).length} kata (Target: 18-22 kata)
+                            </span>
+                          </div>
+                        </div>
                       </div>
                     )}
                   </div>

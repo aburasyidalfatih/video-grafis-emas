@@ -11,6 +11,14 @@ export interface Continuity {
   transition_out: string;
 }
 
+export interface VoiceOver {
+  persona: string;
+  tone_and_delivery: string;
+  speaking_rate: string;
+  recommended_tts: string;
+  script: string;
+}
+
 export interface ScenePrompt {
   scene_number: number;
   duration: string;
@@ -20,7 +28,8 @@ export interface ScenePrompt {
   continuity: Continuity;
   on_screen_text_labels: string[];
   sound_effects: string[];
-  voice_over_script: string;
+  voice_over: VoiceOver;
+  voice_over_script?: string;
 }
 
 export interface VideoPayload {
