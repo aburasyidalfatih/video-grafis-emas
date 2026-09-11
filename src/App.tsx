@@ -36,6 +36,8 @@ const DEFAULT_TOPIC = `Reading The River: Gold drops where water slows down.
 
 const CATEGORIES = ['All', 'River & Placer', 'Rocks & Minerals', 'Equipment & Tools', 'Geology & Formations', 'History & Field Knowledge'] as const;
 
+const CANDIDATE_MODELS = ['gemini-3.6-flash', 'gemini-2.5-flash', 'gemini-2.0-flash', 'gemini-1.5-flash'];
+
 export default function App() {
   const [userApiKey, setUserApiKey] = useState(() => localStorage.getItem('user_gemini_api_key') || '');
   const [showApiSettings, setShowApiSettings] = useState(false);
@@ -132,6 +134,27 @@ export default function App() {
     return new GoogleGenAI({ apiKey: key });
   };
 
+  const generateWithFallback = async (ai: GoogleGenAI, contents: string) => {
+    let lastErr: any = null;
+    for (const model of CANDIDATE_MODELS) {
+      try {
+        return await ai.models.generateContent({
+          model,
+          contents,
+        });
+      } catch (err: any) {
+        lastErr = err;
+        const msg = err?.message || JSON.stringify(err);
+        if (msg.includes('404') || msg.includes('not found') || msg.includes('no longer available')) {
+          console.warn(`[Video Grafis Emas] Model "${model}" not available, trying next fallback...`);
+          continue;
+        }
+        throw err;
+      }
+    }
+    throw lastErr;
+  };
+
   const saveApiKey = (key: string) => {
     setUserApiKey(key);
     localStorage.setItem('user_gemini_api_key', key);
@@ -144,9 +167,7 @@ export default function App() {
     try {
       const activePersonaObj = VOICE_PERSONAS.find((p) => p.id === selectedVoicePersona) || VOICE_PERSONAS[0];
       const ai = getAiInstance();
-      const response = await ai.models.generateContent({
-        model: 'gemini-2.5-flash',
-        contents: `You are an expert cinematic director for viral, photorealistic short-form educational videos (TikTok/Reels/Shorts).
+      const response = await generateWithFallback(ai, `You are an expert cinematic director for viral, photorealistic short-form educational videos (TikTok/Reels/Shorts).
         Based on the following idea, create a detailed, highly visual video concept structured exactly into 3 sequential scenes (8 seconds each, 24 seconds total).
         Write the descriptions in English for high-end AI video generators (Runway Gen-3, Sora, Kling, Veo).
 
@@ -176,8 +197,7 @@ export default function App() {
            - Voice Over: [Spoken script by ${activePersonaObj.name} strictly 18-22 words...]
         3. Scene 3 (The Loop):
            - Visuals: [Detailed photorealistic visual description concluding the insight and ending in a camera position that loops into Scene 1...]
-           - Voice Over: [Spoken script by ${activePersonaObj.name} strictly 18-22 words...]`,
-      });
+           - Voice Over: [Spoken script by ${activePersonaObj.name} strictly 18-22 words...]`);
 
       if (response.text) {
         setTopic(response.text);
@@ -199,9 +219,7 @@ export default function App() {
     try {
       const activePersonaObj = VOICE_PERSONAS.find((p) => p.id === selectedVoicePersona) || VOICE_PERSONAS[0];
       const ai = getAiInstance();
-      const response = await ai.models.generateContent({
-        model: 'gemini-2.5-flash',
-        contents: `You are an elite AI video generation prompt engineer and cinematic documentary director.
+      const response = await generateWithFallback(ai, `You are an elite AI video generation prompt engineer and cinematic documentary director.
 Create a production payload for a viral, photorealistic 3-scene educational video based on the following topic.
 
 Topic: ${topic}
@@ -317,8 +335,7 @@ Respond ONLY with a valid JSON object matching this schema:
   ],
   "social_media_caption": "Engaging caption in English for TikTok, Instagram Reels, and YouTube Shorts summarizing the secret.",
   "hashtags": ["#GoldProspecting", "#GoldMining", "#GeologyFacts", "#GoldNugget", "#MiningLife", "#EarthScience"]
-}`,
-      });
+}`);
 
       let text = response.text || '';
       // Clean up markdown formatting if present
