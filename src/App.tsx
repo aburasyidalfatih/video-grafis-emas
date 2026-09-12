@@ -141,7 +141,6 @@ export default function App() {
     return (localStorage.getItem('user_video_style') as VideoStyleId) || 'neon-cyber';
   });
   const [selectedVoicePersona, setSelectedVoicePersona] = useState<string>('geologist');
-  const [copiedVoiceOver, setCopiedVoiceOver] = useState(false);
 
   const handleSelectVideoStyle = (styleId: VideoStyleId) => {
     setSelectedVideoStyle(styleId);
@@ -163,8 +162,6 @@ export default function App() {
   const [topic, setTopic] = useState('');
   const [jsonOutput, setJsonOutput] = useState<string | null>(null);
   const [scenes, setScenes] = useState<ScenePrompt[] | null>(null);
-  const [activeSceneTab, setActiveSceneTab] = useState<'scene-1' | 'scene-2' | 'scene-3' | 'all'>('scene-1');
-  const [copiedScene, setCopiedScene] = useState<number | null>(null);
   const [socialMediaCaption, setSocialMediaCaption] = useState<string>('');
   const [hashtags, setHashtags] = useState<string[]>([]);
   const [copiedCaption, setCopiedCaption] = useState(false);
@@ -176,16 +173,6 @@ export default function App() {
     const raw = JSON.stringify(sceneList, null, 2);
     // Tambahkan satu enter (baris kosong) untuk membatasi setiap scene
     return raw.replace(/\},\n(\s*)\{/g, (match, indent) => `},\n\n${indent}{`);
-  };
-
-  const copySceneJson = (sceneNum: number) => {
-    if (!scenes) return;
-    const scene = scenes.find((s: ScenePrompt) => s.scene_number === sceneNum);
-    if (scene) {
-      navigator.clipboard.writeText(JSON.stringify(scene, null, 2));
-      setCopiedScene(sceneNum);
-      setTimeout(() => setCopiedScene(null), 2000);
-    }
   };
 
   const copyAllJson = () => {
@@ -524,7 +511,6 @@ Respond ONLY with a valid JSON object matching this schema:
 
       setScenes(normalizedScenes);
       setJsonOutput(formatAllScenesJson(normalizedScenes));
-      setActiveSceneTab('scene-1');
       
     } catch (err: any) {
       console.error(err);
@@ -536,11 +522,7 @@ Respond ONLY with a valid JSON object matching this schema:
 
   const getCurrentPromptText = () => {
     if (!scenes || scenes.length === 0) return jsonOutput || '';
-    if (activeSceneTab === 'all') {
-      return formatAllScenesJson(scenes);
-    }
-    const idx = activeSceneTab === 'scene-1' ? 0 : activeSceneTab === 'scene-2' ? 1 : 2;
-    return JSON.stringify(scenes[idx] || scenes[0], null, 2);
+    return formatAllScenesJson(scenes);
   };
 
   const copyToClipboard = () => {
@@ -1177,7 +1159,7 @@ Respond ONLY with a valid JSON object matching this schema:
                   <div>
                     <div className="flex items-center gap-2">
                       <span className="text-xs font-bold tracking-widest text-neutral-300 uppercase">
-                        Per-Scene Video Prompts (JSON)
+                        Full Video Prompts (3 Scenes JSON)
                       </span>
                       <span className={`text-[10px] px-2 py-0.5 rounded-full font-semibold border ${
                         selectedVideoStyle === 'neon-cyber'
@@ -1186,11 +1168,14 @@ Respond ONLY with a valid JSON object matching this schema:
                       }`}>
                         {selectedVideoStyle === 'neon-cyber' ? '⚡ Khas Neon 3D' : '🎬 Realistis Sinematik'}
                       </span>
+                      <span className="text-[10px] px-2 py-0.5 rounded-full font-semibold bg-white/5 text-neutral-300 border border-white/10">
+                        30s Total
+                      </span>
                     </div>
                     <span className="text-[11px] text-neutral-500 font-medium block mt-0.5">
                       {selectedVideoStyle === 'neon-cyber'
-                        ? '3D Motion Graphics & Cyan Telemetry HUD (10s per Scene - Omni Gemini Video)'
-                        : 'Photorealistic 10s Cinematic Scene Prompts for Omni Gemini Video'}
+                        ? 'Full 3-Scene 3D Infographics Payload (10s/Scene • Pemisah Enter)'
+                        : 'Full 3-Scene Photorealistic Documentary Payload (10s/Scene • Pemisah Enter)'}
                     </span>
                   </div>
                 </div>
@@ -1198,223 +1183,44 @@ Respond ONLY with a valid JSON object matching this schema:
                 <div className="flex items-center gap-2 self-start sm:self-auto">
                   {scenes && scenes.length > 0 && (
                     <button
-                      onClick={() => {
-                        if (activeSceneTab === 'all') {
-                          copyAllJson();
-                        } else {
-                          const sceneNum = activeSceneTab === 'scene-1' ? 1 : activeSceneTab === 'scene-2' ? 2 : 3;
-                          copySceneJson(sceneNum);
-                        }
-                      }}
-                      className="px-3 py-1.5 rounded-xl bg-emerald-500/15 hover:bg-emerald-500/25 text-emerald-300 border border-emerald-500/30 text-xs font-semibold flex items-center space-x-1.5 transition-all active:scale-95 shadow-[0_0_12px_rgba(16,185,129,0.15)]"
-                      title={activeSceneTab === 'all' ? 'Salin semua 3 scenes dengan pemisah enter' : 'Salin hanya JSON scene yang aktif'}
+                      onClick={copyAllJson}
+                      className="px-4 py-2 rounded-xl bg-emerald-500/15 hover:bg-emerald-500/25 text-emerald-300 border border-emerald-500/30 text-xs font-semibold flex items-center space-x-2 transition-all active:scale-95 shadow-[0_0_12px_rgba(16,185,129,0.15)]"
+                      title="Salin semua 3 scenes dengan pemisah enter"
                     >
-                      {((activeSceneTab === 'all' && copied) || (activeSceneTab !== 'all' && copiedScene === (activeSceneTab === 'scene-1' ? 1 : activeSceneTab === 'scene-2' ? 2 : 3))) ? (
+                      {copied ? (
                         <>
-                          <CheckCircle2 className="w-3.5 h-3.5 text-emerald-400" />
-                          <span>Copied!</span>
+                          <CheckCircle2 className="w-4 h-4 text-emerald-400" />
+                          <span>Copied Full JSON!</span>
                         </>
                       ) : (
                         <>
-                          <Copy className="w-3.5 h-3.5" />
-                          <span>Copy {activeSceneTab === 'all' ? 'All 3 Scenes' : activeSceneTab.toUpperCase().replace('-', ' ')} JSON</span>
+                          <Copy className="w-4 h-4" />
+                          <span>Copy Full Prompts (3 Scenes)</span>
                         </>
                       )}
                     </button>
                   )}
-
-                  <button
-                    onClick={copyAllJson}
-                    disabled={!scenes}
-                    className="p-2 rounded-xl bg-white/5 hover:bg-white/10 text-neutral-400 hover:text-white disabled:opacity-40 transition-all active:scale-95 border border-white/5"
-                    title="Copy All 3 Scenes JSON Array (Pemisah Enter)"
-                  >
-                    {copied ? <CheckCircle2 className="w-4 h-4 text-emerald-400 drop-shadow-[0_0_8px_rgba(52,211,153,0.5)]" /> : <Copy className="w-4 h-4" />}
-                  </button>
                 </div>
               </div>
 
-              {/* Scene Tabs Bar */}
-              {scenes && scenes.length > 0 && (
-                <div className="px-6 pt-3 pb-3 border-b border-white/5 bg-[#07080c] flex items-center gap-2 overflow-x-auto custom-scrollbar">
-                  {[
-                    { id: 'scene-1', label: 'Scene 1: Hook', badge: '10s' },
-                    { id: 'scene-2', label: 'Scene 2: Core', badge: '10s' },
-                    { id: 'scene-3', label: 'Scene 3: Loop', badge: '10s' },
-                    { id: 'all', label: 'Semua (3 Scenes Array)', badge: '30s' },
-                  ].map((tab) => {
-                    const isActive = activeSceneTab === tab.id;
-                    return (
-                      <button
-                        key={tab.id}
-                        onClick={() => setActiveSceneTab(tab.id as any)}
-                        className={`text-xs px-3.5 py-2 rounded-xl whitespace-nowrap font-medium transition-all flex items-center gap-2 border ${
-                          isActive
-                            ? selectedVideoStyle === 'neon-cyber'
-                              ? 'bg-cyan-400 text-black font-bold border-cyan-300 shadow-[0_0_15px_rgba(6,182,212,0.35)]'
-                              : 'bg-amber-500 text-black font-bold border-amber-400 shadow-[0_0_12px_rgba(245,158,11,0.25)]'
-                            : 'bg-white/5 text-neutral-400 border-white/5 hover:bg-white/10 hover:text-neutral-200'
-                        }`}
-                      >
-                        {selectedVideoStyle === 'neon-cyber' ? (
-                          <Zap className={`w-3.5 h-3.5 ${isActive ? 'text-black' : 'text-neutral-500'}`} />
-                        ) : (
-                          <Film className={`w-3.5 h-3.5 ${isActive ? 'text-black' : 'text-neutral-500'}`} />
-                        )}
-                        <span>{tab.label}</span>
-                        <span className={`text-[10px] px-1.5 py-0.5 rounded-full ${isActive ? 'bg-black/25 text-black' : 'bg-white/10 text-neutral-400'}`}>
-                          {tab.badge}
-                        </span>
-                      </button>
-                    );
-                  })}
-                </div>
-              )}
-
-              {/* Continuity and Details Strip for Active Scene */}
-              {scenes && scenes.length > 0 && activeSceneTab !== 'all' && (() => {
-                const sceneIndex = activeSceneTab === 'scene-1' ? 0 : activeSceneTab === 'scene-2' ? 1 : 2;
-                const activeScene = scenes[sceneIndex] || scenes[0];
-                return (
-                  <div className="px-6 py-3.5 bg-[#090a0f] border-b border-white/5 space-y-2.5 text-xs">
-                    <div className="flex flex-wrap items-center justify-between gap-2">
-                      <div className="flex items-center gap-2">
-                        <span className={`font-bold uppercase tracking-wider text-[11px] px-2 py-0.5 rounded border ${
-                          selectedVideoStyle === 'neon-cyber'
-                            ? 'text-cyan-400 bg-cyan-500/10 border-cyan-500/25'
-                            : 'text-amber-400 bg-amber-500/10 border-amber-500/20'
-                        }`}>
-                          Timeline: {activeScene.continuity?.timeline_segment || `${activeScene.duration}`}
-                        </span>
-                        <span className="text-neutral-500">•</span>
-                        <span className="text-neutral-300 font-medium truncate max-w-xs">
-                          {activeScene.continuity?.visual_anchor}
-                        </span>
-                      </div>
-
-                      {activeScene.on_screen_text_labels && activeScene.on_screen_text_labels.length > 0 && (
-                        <div className="flex items-center gap-1.5 flex-wrap">
-                          {activeScene.on_screen_text_labels.map((lbl, i) => (
-                            <span key={i} className="text-[10px] px-2 py-0.5 rounded bg-blue-500/10 text-blue-300 border border-blue-500/20 font-mono">
-                              {lbl}
-                            </span>
-                          ))}
-                        </div>
-                      )}
-                    </div>
-
-                    {/* Flow & Transitions */}
-                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 text-[11px] bg-black/40 p-2.5 rounded-xl border border-white/5">
-                      <div>
-                        <span className="text-neutral-500 font-semibold uppercase tracking-wider text-[10px] block mb-0.5">
-                          Transition In:
-                        </span>
-                        <span className="text-neutral-300">{activeScene.continuity?.transition_in || '-'}</span>
-                      </div>
-                      <div>
-                        <span className="text-amber-500/80 font-semibold uppercase tracking-wider text-[10px] block mb-0.5">
-                          Transition Out & Continuity Link:
-                        </span>
-                        <span className="text-neutral-300">{activeScene.continuity?.transition_out || '-'}</span>
-                      </div>
-                    </div>
-
-                    {/* Voice Over Script & Character Inspector */}
-                    {(activeScene.voice_over?.script || activeScene.voice_over_script) && (
-                      <div className="bg-emerald-500/[0.04] border border-emerald-500/20 rounded-2xl p-3 space-y-2">
-                        <div className="flex flex-wrap items-center justify-between gap-2 border-b border-emerald-500/10 pb-2">
-                          <div className="flex items-center gap-2">
-                            <div className="p-1 bg-emerald-500/20 rounded-lg text-emerald-400">
-                              <Mic className="w-3.5 h-3.5" />
-                            </div>
-                            <div>
-                              <div className="flex items-center gap-1.5">
-                                <span className="text-xs font-bold text-emerald-300">
-                                  {activeScene.voice_over?.persona || 'Documentary Narrator'}
-                                </span>
-                                <span className="text-[10px] px-1.5 py-0.2 rounded bg-emerald-500/15 text-emerald-300/80 font-medium">
-                                  Voice Over
-                                </span>
-                              </div>
-                              <span className="text-[10px] text-neutral-400 block mt-0.5">
-                                {activeScene.voice_over?.tone_and_delivery || 'Documentary cadence, calm authoritative'}
-                              </span>
-                            </div>
-                          </div>
-                          
-                          <div className="flex items-center gap-2">
-                            {activeScene.voice_over?.recommended_tts && (
-                              <span className="text-[10px] px-2 py-0.5 rounded-md bg-black/40 text-emerald-400/80 border border-emerald-500/20 font-mono hidden sm:inline-block">
-                                {activeScene.voice_over.recommended_tts}
-                              </span>
-                            )}
-                            <button
-                              onClick={() => {
-                                const text = activeScene.voice_over?.script || activeScene.voice_over_script || '';
-                                if (text) {
-                                  navigator.clipboard.writeText(text);
-                                  setCopiedVoiceOver(true);
-                                  setTimeout(() => setCopiedVoiceOver(false), 2000);
-                                }
-                              }}
-                              className="px-2.5 py-1 rounded-lg bg-emerald-500/15 hover:bg-emerald-500/25 text-emerald-300 text-[10px] font-semibold transition-all flex items-center gap-1 border border-emerald-500/20 active:scale-95"
-                              title="Salin naskah voice over scene ini"
-                            >
-                              {copiedVoiceOver ? <Check className="w-3 h-3 text-emerald-400" /> : <Copy className="w-3 h-3" />}
-                              <span>{copiedVoiceOver ? 'Tersalin' : 'Salin Naskah'}</span>
-                            </button>
-                          </div>
-                        </div>
-
-                        <div className="pt-0.5">
-                          <p className="text-xs sm:text-[13px] text-emerald-200/95 leading-relaxed italic font-sans bg-black/40 p-2.5 rounded-xl border border-white/5">
-                            "{activeScene.voice_over?.script || activeScene.voice_over_script}"
-                          </p>
-                          <div className="flex items-center justify-between mt-1.5 text-[10px] text-neutral-500">
-                            <span>Pacing: {activeScene.voice_over?.speaking_rate || '~135 WPM (10s)'}</span>
-                            <span>
-                              ~{(activeScene.voice_over?.script || activeScene.voice_over_script || '').split(/\s+/).filter(Boolean).length} kata (Target: 22-26 kata)
-                            </span>
-                          </div>
-                        </div>
-                      </div>
-                    )}
-                  </div>
-                );
-              })()}
-              
               {/* Code Viewer */}
               <div className="p-6 md:p-8 bg-[#050508]/80 flex-1 overflow-auto custom-scrollbar relative">
                 <AnimatePresence mode="wait">
                   {scenes && scenes.length > 0 ? (
                     <motion.div
-                      key={activeSceneTab}
+                      key="full-scenes-view"
                       initial={{ opacity: 0, y: 8 }}
                       animate={{ opacity: 1, y: 0 }}
                       exit={{ opacity: 0, y: -8 }}
                       transition={{ duration: 0.25 }}
                     >
                       <div className="flex items-center justify-between mb-3 text-[11px] font-mono text-neutral-500">
-                        <span>
-                          {activeSceneTab === 'all' 
-                            ? 'ALL_SCENES_PROMPT_ARRAY.JSON' 
-                            : `STANDALONE_SCENE_${activeSceneTab.toUpperCase().replace('-', '_')}.JSON`}
-                        </span>
-                        <span>
-                          {activeSceneTab === 'all' 
-                            ? 'Format: Standardized Pure Scene JSON (Pemisah Enter Antar Scene)' 
-                            : 'Format: Standardized Pure Scene JSON'}
-                        </span>
+                        <span>FULL_PRODUCTION_PROMPT_PAYLOAD.JSON</span>
+                        <span>Format: 3 Scenes Array (10s/Scene • Pemisah Enter)</span>
                       </div>
 
                       <pre className="text-[12px] sm:text-[13px] leading-relaxed font-mono text-emerald-400/90 whitespace-pre-wrap break-words bg-black/60 p-5 rounded-2xl border border-white/5">
-                        {activeSceneTab === 'all'
-                          ? formatAllScenesJson(scenes)
-                          : (() => {
-                              const sceneIndex = activeSceneTab === 'scene-1' ? 0 : activeSceneTab === 'scene-2' ? 1 : 2;
-                              const scene = scenes[sceneIndex] || scenes[0];
-                              return JSON.stringify(scene, null, 2);
-                            })()}
+                        {formatAllScenesJson(scenes)}
                       </pre>
                     </motion.div>
                   ) : jsonOutput ? (
@@ -1442,43 +1248,13 @@ Respond ONLY with a valid JSON object matching this schema:
                       <div className="text-center space-y-1">
                         <p className="text-sm font-semibold tracking-widest uppercase text-neutral-400">Waiting for generation...</p>
                         <p className="text-xs text-neutral-600 max-w-xs">
-                          JSON per scene murni tanpa metadata medsos akan tampil di sini.
+                          JSON full 3-scene siap pakai untuk Omni Gemini Video akan tampil di sini.
                         </p>
                       </div>
                     </motion.div>
                   )}
                 </AnimatePresence>
               </div>
-
-              {/* Quick Copy Footer Bar */}
-              {scenes && scenes.length >= 3 && (
-                <div className="px-6 py-3 border-t border-white/5 bg-[#08090d] flex flex-wrap items-center justify-between gap-2 text-xs">
-                  <span className="text-neutral-500 font-medium">Quick Copy per Scene:</span>
-                  <div className="flex items-center gap-2 flex-wrap">
-                    {[1, 2, 3].map((num) => (
-                      <button
-                        key={num}
-                        onClick={() => copySceneJson(num)}
-                        className="px-2.5 py-1 rounded-lg bg-white/5 hover:bg-emerald-500/15 hover:text-emerald-300 border border-white/5 text-[11px] font-medium transition-all active:scale-95 flex items-center gap-1"
-                      >
-                        {copiedScene === num ? (
-                          <Check className="w-3 h-3 text-emerald-400" />
-                        ) : (
-                          <Copy className="w-3 h-3 text-neutral-500" />
-                        )}
-                        <span>Scene {num}</span>
-                      </button>
-                    ))}
-                    <button
-                      onClick={copyAllJson}
-                      className="px-2.5 py-1 rounded-lg bg-white/5 hover:bg-amber-500/15 hover:text-amber-300 border border-white/5 text-[11px] font-medium transition-all active:scale-95 flex items-center gap-1"
-                    >
-                      {copied ? <Check className="w-3 h-3 text-amber-400" /> : <Layers className="w-3 h-3 text-neutral-500" />}
-                      <span>All (3 Scenes)</span>
-                    </button>
-                  </div>
-                </div>
-              )}
             </div>
           </motion.div>
         </div>
