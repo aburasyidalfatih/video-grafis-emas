@@ -1,9 +1,11 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import { GoogleGenAI } from '@google/genai';
-import { FileJson, Sparkles, Copy, CheckCircle2, Video, AlertCircle, Lightbulb, Wand2, Key, X, Check, Search, ChevronRight, ChevronLeft, Compass, Filter, ArrowRight, Film, Volume2, Layers, Download, MessageSquare, Mic, Zap } from 'lucide-react';
+import { FileJson, Sparkles, Copy, CheckCircle2, Video, AlertCircle, Lightbulb, Wand2, Key, X, Check, Search, ChevronRight, ChevronLeft, Compass, Filter, ArrowRight, Film, Volume2, Layers, Download, MessageSquare, Mic, Zap, Lock, ShieldCheck, Delete } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 import { CONTENT_IDEAS, GOLDGEN_TOPICS, formatTopicToIdea, GoldgenTopic } from './ideas';
 import { ScenePrompt, VideoPayload, VoiceOver, VideoStyleId, VideoStyleOption } from './types';
+
+const APP_LOGIN_PIN = '888888';
 
 export const VIDEO_STYLES: VideoStyleOption[] = [
   {
@@ -68,6 +70,71 @@ const CATEGORIES = ['All', 'River & Placer', 'Rocks & Minerals', 'Equipment & To
 const CANDIDATE_MODELS = ['gemini-3.6-flash', 'gemini-2.5-flash', 'gemini-2.0-flash', 'gemini-1.5-flash'];
 
 export default function App() {
+  // PIN Authentication state (PIN: 888888)
+  const [isAuthenticated, setIsAuthenticated] = useState<boolean>(() => {
+    return localStorage.getItem('vg_pin_authenticated') === 'true';
+  });
+  const [pinInput, setPinInput] = useState<string>('');
+  const [pinError, setPinError] = useState<boolean>(false);
+  const [pinSuccess, setPinSuccess] = useState<boolean>(false);
+
+  const handlePinDigit = (digit: string) => {
+    if (pinInput.length >= 6 || pinSuccess) return;
+    const nextPin = pinInput + digit;
+    setPinInput(nextPin);
+    setPinError(false);
+
+    if (nextPin.length === 6) {
+      if (nextPin === APP_LOGIN_PIN) {
+        setPinSuccess(true);
+        setTimeout(() => {
+          localStorage.setItem('vg_pin_authenticated', 'true');
+          setIsAuthenticated(true);
+          setPinSuccess(false);
+          setPinInput('');
+        }, 400);
+      } else {
+        setPinError(true);
+        setTimeout(() => {
+          setPinInput('');
+          setPinError(false);
+        }, 850);
+      }
+    }
+  };
+
+  const handlePinBackspace = () => {
+    if (pinInput.length > 0 && !pinSuccess) {
+      setPinInput((prev) => prev.slice(0, -1));
+      setPinError(false);
+    }
+  };
+
+  const handleLogout = () => {
+    localStorage.removeItem('vg_pin_authenticated');
+    setIsAuthenticated(false);
+    setPinInput('');
+    setPinError(false);
+    setPinSuccess(false);
+  };
+
+  // Keyboard listener when on PIN screen
+  useEffect(() => {
+    if (isAuthenticated) return;
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key >= '0' && e.key <= '9') {
+        handlePinDigit(e.key);
+      } else if (e.key === 'Backspace') {
+        handlePinBackspace();
+      } else if (e.key === 'Escape') {
+        setPinInput('');
+        setPinError(false);
+      }
+    };
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [isAuthenticated, pinInput, pinSuccess]);
+
   const [userApiKey, setUserApiKey] = useState(() => localStorage.getItem('user_gemini_api_key') || '');
   const [showApiSettings, setShowApiSettings] = useState(false);
   const [selectedVideoStyle, setSelectedVideoStyle] = useState<VideoStyleId>(() => {
@@ -477,6 +544,137 @@ Respond ONLY with a valid JSON object matching this schema:
     }
   };
 
+  if (!isAuthenticated) {
+    return (
+      <div className="min-h-screen bg-[#07080c] text-white flex flex-col items-center justify-center p-4 relative overflow-hidden select-none font-sans">
+        {/* Ambient background glows */}
+        <div className="absolute top-1/4 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[550px] h-[550px] bg-amber-500/10 rounded-full blur-[130px] pointer-events-none" />
+        <div className="absolute bottom-1/4 left-1/3 w-[450px] h-[450px] bg-cyan-500/10 rounded-full blur-[110px] pointer-events-none" />
+
+        {/* PIN Login Box */}
+        <motion.div 
+          initial={{ opacity: 0, scale: 0.92, y: 16 }}
+          animate={{ opacity: 1, scale: 1, y: 0 }}
+          transition={{ duration: 0.4, ease: "easeOut" }}
+          className="w-full max-w-sm bg-neutral-900/70 backdrop-blur-2xl border border-white/10 rounded-3xl p-7 sm:p-8 shadow-[0_0_60px_rgba(0,0,0,0.85)] relative z-10 flex flex-col items-center text-center"
+        >
+          {/* Logo Badge */}
+          <div className="relative mb-5">
+            <div className={`w-16 h-16 rounded-2xl flex items-center justify-center transition-all duration-300 border ${
+              pinSuccess 
+                ? 'bg-emerald-500 text-black border-emerald-300/40 shadow-[0_0_30px_rgba(16,185,129,0.4)]' 
+                : 'bg-gradient-to-br from-amber-400 to-orange-500 text-black border-amber-300/30 shadow-[0_0_30px_rgba(245,158,11,0.35)]'
+            }`}>
+              {pinSuccess ? (
+                <CheckCircle2 className="w-8 h-8 animate-bounce" />
+              ) : (
+                <Lock className="w-8 h-8" />
+              )}
+            </div>
+            <div className="absolute -inset-1 rounded-2xl bg-amber-500/20 blur-md -z-10 animate-pulse" />
+          </div>
+
+          <h1 className="text-xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-amber-200 via-white to-neutral-300">
+            Video Grafis Emas
+          </h1>
+          <p className="text-xs text-neutral-400 mt-1.5 mb-6 leading-relaxed">
+            Akses sistem terproteksi. Masukkan 6 digit PIN untuk masuk.
+          </p>
+
+          {/* 6-Digit Dots Indicator */}
+          <motion.div 
+            animate={pinError ? { x: [-12, 12, -8, 8, -4, 4, 0] } : {}}
+            transition={{ duration: 0.45 }}
+            className="flex items-center justify-center gap-3.5 mb-5"
+          >
+            {[0, 1, 2, 3, 4, 5].map((index) => {
+              const isFilled = index < pinInput.length;
+              return (
+                <div
+                  key={index}
+                  className={`w-4 h-4 rounded-full transition-all duration-200 ${
+                    pinError
+                      ? 'bg-red-500 shadow-[0_0_12px_rgba(239,68,68,0.7)] scale-110'
+                      : pinSuccess
+                      ? 'bg-emerald-400 shadow-[0_0_12px_rgba(52,211,153,0.8)] scale-110'
+                      : isFilled
+                      ? 'bg-amber-400 shadow-[0_0_12px_rgba(245,158,11,0.6)] scale-110 ring-2 ring-amber-400/40'
+                      : 'bg-white/10 border border-white/20'
+                  }`}
+                />
+              );
+            })}
+          </motion.div>
+
+          {/* Feedback Status */}
+          <div className="h-6 mb-3 flex items-center justify-center text-xs">
+            {pinError ? (
+              <span className="text-red-400 font-medium flex items-center gap-1.5 animate-pulse">
+                <AlertCircle className="w-3.5 h-3.5" /> PIN Salah! Silakan coba lagi
+              </span>
+            ) : pinSuccess ? (
+              <span className="text-emerald-400 font-medium flex items-center gap-1.5">
+                <CheckCircle2 className="w-3.5 h-3.5" /> PIN Benar! Membuka sistem...
+              </span>
+            ) : (
+              <span className="text-neutral-500 text-[11px]">
+                Ketik langsung via keyboard atau tombol angka
+              </span>
+            )}
+          </div>
+
+          {/* Numeric Keypad */}
+          <div className="grid grid-cols-3 gap-2.5 w-full max-w-[260px]">
+            {['1', '2', '3', '4', '5', '6', '7', '8', '9'].map((digit) => (
+              <button
+                key={digit}
+                type="button"
+                onClick={() => handlePinDigit(digit)}
+                disabled={pinSuccess}
+                className="py-3 rounded-2xl bg-white/[0.04] hover:bg-amber-500/15 active:bg-amber-500/30 text-white hover:text-amber-300 font-semibold text-lg border border-white/5 hover:border-amber-500/30 transition-all duration-150 active:scale-95 shadow-sm select-none cursor-pointer"
+              >
+                {digit}
+              </button>
+            ))}
+            <button
+              type="button"
+              onClick={() => {
+                setPinInput('');
+                setPinError(false);
+              }}
+              disabled={pinSuccess || pinInput.length === 0}
+              className="py-3 rounded-2xl bg-white/[0.02] hover:bg-white/10 text-neutral-400 hover:text-white font-medium text-xs border border-white/5 transition-all duration-150 active:scale-95 disabled:opacity-25 disabled:pointer-events-none select-none cursor-pointer"
+            >
+              Hapus
+            </button>
+            <button
+              type="button"
+              onClick={() => handlePinDigit('0')}
+              disabled={pinSuccess}
+              className="py-3 rounded-2xl bg-white/[0.04] hover:bg-amber-500/15 active:bg-amber-500/30 text-white hover:text-amber-300 font-semibold text-lg border border-white/5 hover:border-amber-500/30 transition-all duration-150 active:scale-95 shadow-sm select-none cursor-pointer"
+            >
+              0
+            </button>
+            <button
+              type="button"
+              onClick={handlePinBackspace}
+              disabled={pinSuccess || pinInput.length === 0}
+              className="py-3 rounded-2xl bg-white/[0.02] hover:bg-white/10 text-neutral-400 hover:text-white flex items-center justify-center border border-white/5 transition-all duration-150 active:scale-95 disabled:opacity-25 disabled:pointer-events-none select-none cursor-pointer"
+              title="Backspace"
+            >
+              <Delete className="w-4 h-4" />
+            </button>
+          </div>
+
+          <div className="mt-6 pt-4 border-t border-white/5 w-full flex items-center justify-center text-[11px] text-neutral-500">
+            <ShieldCheck className="w-3.5 h-3.5 mr-1.5 text-amber-500/70" />
+            <span>Sesi Terproteksi PIN</span>
+          </div>
+        </motion.div>
+      </div>
+    );
+  }
+
   return (
     <div className="min-h-screen bg-[#030305] text-neutral-200 font-sans p-6 md:p-12 relative overflow-hidden">
       {/* Background ambient glows */}
@@ -509,7 +707,15 @@ Respond ONLY with a valid JSON object matching this schema:
             </div>
           </div>
           
-          <div className="relative">
+          <div className="flex items-center gap-2.5 relative">
+            <button
+              onClick={handleLogout}
+              className="p-3 rounded-2xl border border-white/10 bg-white/5 hover:bg-amber-500/10 hover:border-amber-500/30 text-neutral-400 hover:text-amber-300 transition-all active:scale-95"
+              title="Kunci Aplikasi (Logout)"
+            >
+              <Lock className="w-5 h-5" />
+            </button>
+
             <button
               onClick={() => setShowApiSettings(!showApiSettings)}
               className={`p-3 rounded-2xl border transition-all ${
