@@ -172,6 +172,12 @@ export default function App() {
   const [copied, setCopied] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
+  const formatAllScenesJson = (sceneList: ScenePrompt[]): string => {
+    const raw = JSON.stringify(sceneList, null, 2);
+    // Tambahkan satu enter (baris kosong) untuk membatasi setiap scene
+    return raw.replace(/\},\n(\s*)\{/g, (match, indent) => `},\n\n${indent}{`);
+  };
+
   const copySceneJson = (sceneNum: number) => {
     if (!scenes) return;
     const scene = scenes.find((s: ScenePrompt) => s.scene_number === sceneNum);
@@ -184,7 +190,7 @@ export default function App() {
 
   const copyAllJson = () => {
     if (scenes) {
-      navigator.clipboard.writeText(JSON.stringify(scenes, null, 2));
+      navigator.clipboard.writeText(formatAllScenesJson(scenes));
       setCopied(true);
       setTimeout(() => setCopied(false), 2000);
     }
@@ -398,6 +404,7 @@ Respond ONLY with a valid JSON object matching this schema:
         "script": "Spoken curiosity hook in English strictly budgeted to 22-26 words for 10 seconds."
       }
     },
+
     {
       "scene_number": 2,
       "duration": "10s",
@@ -424,6 +431,7 @@ Respond ONLY with a valid JSON object matching this schema:
         "script": "Spoken core explanation script in English strictly budgeted to 22-26 words for 10 seconds."
       }
     },
+
     {
       "scene_number": 3,
       "duration": "10s",
@@ -515,7 +523,7 @@ Respond ONLY with a valid JSON object matching this schema:
       });
 
       setScenes(normalizedScenes);
-      setJsonOutput(JSON.stringify(normalizedScenes, null, 2));
+      setJsonOutput(formatAllScenesJson(normalizedScenes));
       setActiveSceneTab('scene-1');
       
     } catch (err: any) {
@@ -529,7 +537,7 @@ Respond ONLY with a valid JSON object matching this schema:
   const getCurrentPromptText = () => {
     if (!scenes || scenes.length === 0) return jsonOutput || '';
     if (activeSceneTab === 'all') {
-      return JSON.stringify(scenes, null, 2);
+      return formatAllScenesJson(scenes);
     }
     const idx = activeSceneTab === 'scene-1' ? 0 : activeSceneTab === 'scene-2' ? 1 : 2;
     return JSON.stringify(scenes[idx] || scenes[0], null, 2);
@@ -1188,16 +1196,20 @@ Respond ONLY with a valid JSON object matching this schema:
                 </div>
 
                 <div className="flex items-center gap-2 self-start sm:self-auto">
-                  {scenes && scenes.length > 0 && activeSceneTab !== 'all' && (
+                  {scenes && scenes.length > 0 && (
                     <button
                       onClick={() => {
-                        const sceneNum = activeSceneTab === 'scene-1' ? 1 : activeSceneTab === 'scene-2' ? 2 : 3;
-                        copySceneJson(sceneNum);
+                        if (activeSceneTab === 'all') {
+                          copyAllJson();
+                        } else {
+                          const sceneNum = activeSceneTab === 'scene-1' ? 1 : activeSceneTab === 'scene-2' ? 2 : 3;
+                          copySceneJson(sceneNum);
+                        }
                       }}
                       className="px-3 py-1.5 rounded-xl bg-emerald-500/15 hover:bg-emerald-500/25 text-emerald-300 border border-emerald-500/30 text-xs font-semibold flex items-center space-x-1.5 transition-all active:scale-95 shadow-[0_0_12px_rgba(16,185,129,0.15)]"
-                      title="Salin hanya JSON scene yang aktif"
+                      title={activeSceneTab === 'all' ? 'Salin semua 3 scenes dengan pemisah enter' : 'Salin hanya JSON scene yang aktif'}
                     >
-                      {copiedScene === (activeSceneTab === 'scene-1' ? 1 : activeSceneTab === 'scene-2' ? 2 : 3) ? (
+                      {((activeSceneTab === 'all' && copied) || (activeSceneTab !== 'all' && copiedScene === (activeSceneTab === 'scene-1' ? 1 : activeSceneTab === 'scene-2' ? 2 : 3))) ? (
                         <>
                           <CheckCircle2 className="w-3.5 h-3.5 text-emerald-400" />
                           <span>Copied!</span>
@@ -1205,7 +1217,7 @@ Respond ONLY with a valid JSON object matching this schema:
                       ) : (
                         <>
                           <Copy className="w-3.5 h-3.5" />
-                          <span>Copy {activeSceneTab.toUpperCase().replace('-', ' ')} JSON</span>
+                          <span>Copy {activeSceneTab === 'all' ? 'All 3 Scenes' : activeSceneTab.toUpperCase().replace('-', ' ')} JSON</span>
                         </>
                       )}
                     </button>
@@ -1215,7 +1227,7 @@ Respond ONLY with a valid JSON object matching this schema:
                     onClick={copyAllJson}
                     disabled={!scenes}
                     className="p-2 rounded-xl bg-white/5 hover:bg-white/10 text-neutral-400 hover:text-white disabled:opacity-40 transition-all active:scale-95 border border-white/5"
-                    title="Copy All 3 Scenes JSON Array"
+                    title="Copy All 3 Scenes JSON Array (Pemisah Enter)"
                   >
                     {copied ? <CheckCircle2 className="w-4 h-4 text-emerald-400 drop-shadow-[0_0_8px_rgba(52,211,153,0.5)]" /> : <Copy className="w-4 h-4" />}
                   </button>
@@ -1388,12 +1400,16 @@ Respond ONLY with a valid JSON object matching this schema:
                             ? 'ALL_SCENES_PROMPT_ARRAY.JSON' 
                             : `STANDALONE_SCENE_${activeSceneTab.toUpperCase().replace('-', '_')}.JSON`}
                         </span>
-                        <span>Format: Standardized Pure Scene JSON</span>
+                        <span>
+                          {activeSceneTab === 'all' 
+                            ? 'Format: Standardized Pure Scene JSON (Pemisah Enter Antar Scene)' 
+                            : 'Format: Standardized Pure Scene JSON'}
+                        </span>
                       </div>
 
                       <pre className="text-[12px] sm:text-[13px] leading-relaxed font-mono text-emerald-400/90 whitespace-pre-wrap break-words bg-black/60 p-5 rounded-2xl border border-white/5">
                         {activeSceneTab === 'all'
-                          ? JSON.stringify(scenes, null, 2)
+                          ? formatAllScenesJson(scenes)
                           : (() => {
                               const sceneIndex = activeSceneTab === 'scene-1' ? 0 : activeSceneTab === 'scene-2' ? 1 : 2;
                               const scene = scenes[sceneIndex] || scenes[0];
