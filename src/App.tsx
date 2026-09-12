@@ -11,7 +11,7 @@ export const VIDEO_STYLES: VideoStyleOption[] = [
   {
     id: 'neon-cyber',
     name: 'Khas Neon 3D Infografis',
-    badge: '⚡ Khas Neon',
+    badge: 'Neon 3D',
     tagline: 'Ultra-modern 3D motion graphics & glowing cyan/gold telemetry HUD',
     description: 'Visual 3D canggih dengan aksen neon emas bercahaya, garis telemetry HUD cyan futuristik, isometric cutaway, dan motion graphics berenergi tinggi.',
     accent: 'cyan',
@@ -24,7 +24,7 @@ export const VIDEO_STYLES: VideoStyleOption[] = [
   {
     id: 'photorealistic',
     name: 'Realistis Sinematik Dokumenter',
-    badge: '🎬 Sinematik Natural',
+    badge: 'Sinematik',
     tagline: '8K natural documentary & authentic macro geology',
     description: 'Gaya dokumenter National Geographic dengan pencahayaan alami, caustics air jernih, tekstur batuan otentik tanpa efek HUD fiksi ilmiah.',
     accent: 'amber',
@@ -772,17 +772,19 @@ Respond ONLY with a valid JSON object matching this schema:
               className="bg-neutral-900/50 backdrop-blur-2xl border border-white/10 rounded-3xl p-5 md:p-6 shadow-2xl relative overflow-hidden"
             >
               <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 mb-4">
-                <div className="flex items-center space-x-2.5">
-                  <div className="w-8 h-8 rounded-xl bg-gradient-to-br from-cyan-500/20 via-amber-500/20 to-orange-500/20 flex items-center justify-center border border-white/10">
+                <div className="flex items-center space-x-2.5 min-w-0">
+                  <div className="w-8 h-8 rounded-xl bg-gradient-to-br from-cyan-500/20 via-amber-500/20 to-orange-500/20 flex items-center justify-center border border-white/10 shrink-0">
                     <Zap className="w-4 h-4 text-cyan-400" />
                   </div>
-                  <div>
-                    <h2 className="text-xs font-bold text-neutral-200 tracking-wider uppercase flex items-center gap-2">
-                      Pilihan Versi Gaya Video
-                      <span className="text-[10px] px-2 py-0.5 rounded-full bg-white/5 border border-white/10 text-neutral-400 font-normal">
+                  <div className="min-w-0">
+                    <div className="flex items-center gap-2 flex-wrap">
+                      <h2 className="text-xs font-bold text-neutral-200 tracking-wider uppercase whitespace-nowrap">
+                        Pilihan Versi Gaya Video
+                      </h2>
+                      <span className="text-[10px] uppercase tracking-wider font-semibold px-2 py-0.5 rounded-full bg-white/5 border border-white/10 text-neutral-400 whitespace-nowrap">
                         Preset Visual AI
                       </span>
-                    </h2>
+                    </div>
                     <p className="text-[11px] text-neutral-400 mt-0.5">
                       Pilih format visual khas neon berenergi tinggi atau sinematik dokumenter natural
                     </p>
@@ -808,35 +810,57 @@ Respond ONLY with a valid JSON object matching this schema:
                       }`}
                     >
                       <div>
-                        <div className="flex items-center justify-between mb-1.5">
-                          <span className={`text-xs font-bold flex items-center gap-1.5 ${
-                            isSelected ? (isNeon ? 'text-cyan-300' : 'text-amber-300') : 'text-neutral-200'
-                          }`}>
-                            {isNeon ? <Zap className="w-3.5 h-3.5 text-cyan-400" /> : <Film className="w-3.5 h-3.5 text-amber-400" />}
-                            {style.name}
-                          </span>
-                          <span className={`text-[10px] font-semibold px-2 py-0.5 rounded-md ${
+                        <div className="flex items-center justify-between gap-2 mb-2">
+                          <div className="flex items-center gap-2 min-w-0">
+                            <div className={`w-7 h-7 rounded-lg border flex items-center justify-center shrink-0 ${
+                              isSelected
+                                ? isNeon
+                                  ? 'bg-cyan-500/20 border-cyan-500/30 text-cyan-400'
+                                  : 'bg-amber-500/20 border-amber-500/30 text-amber-400'
+                                : 'bg-white/5 border-white/10 text-neutral-400'
+                            }`}>
+                              {isNeon ? <Zap className="w-3.5 h-3.5" /> : <Film className="w-3.5 h-3.5" />}
+                            </div>
+                            <span className={`text-xs font-bold truncate ${
+                              isSelected ? (isNeon ? 'text-cyan-300' : 'text-amber-300') : 'text-neutral-200'
+                            }`}>
+                              {style.name}
+                            </span>
+                          </div>
+
+                          <span className={`text-[10px] font-semibold px-2.5 py-0.5 rounded-full whitespace-nowrap shrink-0 border inline-flex items-center gap-1 ${
                             isSelected 
-                              ? (isNeon ? 'bg-cyan-500/20 text-cyan-300 border border-cyan-500/30' : 'bg-amber-500/20 text-amber-300 border border-amber-500/30')
-                              : 'bg-white/5 text-neutral-500 border border-white/5'
+                              ? (isNeon 
+                                  ? 'bg-cyan-500/20 text-cyan-300 border-cyan-500/30 shadow-[0_0_8px_rgba(6,182,212,0.2)]' 
+                                  : 'bg-amber-500/20 text-amber-300 border-amber-500/30 shadow-[0_0_8px_rgba(245,158,11,0.2)]')
+                              : 'bg-white/5 text-neutral-500 border-white/5'
                           }`}>
-                            {style.badge}
+                            {isSelected ? (
+                              <>
+                                <span className={`w-1.5 h-1.5 rounded-full ${isNeon ? 'bg-cyan-400 animate-pulse' : 'bg-amber-400 animate-pulse'}`} />
+                                <span>Aktif</span>
+                              </>
+                            ) : (
+                              <span>Pilih</span>
+                            )}
                           </span>
                         </div>
-                        <p className="text-[11px] text-neutral-400 leading-relaxed">
+                        <p className="text-[11px] text-neutral-400 leading-relaxed line-clamp-3">
                           {style.description}
                         </p>
                       </div>
 
-                      <div className="mt-3 pt-2.5 border-t border-white/5 flex items-center justify-between text-[10px]">
-                        <span className={`font-medium ${isSelected ? (isNeon ? 'text-cyan-400/90' : 'text-amber-400/90') : 'text-neutral-500'}`}>
+                      <div className="mt-3 pt-2.5 border-t border-white/5 flex items-center justify-between gap-2 text-[10px]">
+                        <span className={`font-medium truncate ${isSelected ? (isNeon ? 'text-cyan-400/90' : 'text-amber-400/90') : 'text-neutral-500'}`}>
                           {style.tagline}
                         </span>
-                        {isSelected && (
-                          <div className={`p-0.5 rounded-full ${isNeon ? 'bg-cyan-500/20 text-cyan-400' : 'bg-amber-500/20 text-amber-400'}`}>
-                            <Check className="w-3.5 h-3.5 shrink-0" />
-                          </div>
-                        )}
+                        <span className={`text-[10px] font-mono px-1.5 py-0.5 rounded border whitespace-nowrap shrink-0 ${
+                          isSelected
+                            ? isNeon ? 'bg-cyan-500/15 text-cyan-300 border-cyan-500/25' : 'bg-amber-500/15 text-amber-300 border-amber-500/25'
+                            : 'bg-black/30 text-neutral-500 border-white/5'
+                        }`}>
+                          {isNeon ? '3D HUD' : '8K Real'}
+                        </span>
                       </div>
                     </button>
                   );
@@ -945,7 +969,7 @@ Respond ONLY with a valid JSON object matching this schema:
                     <Film className="w-3.5 h-3.5 text-amber-400" />
                     Versi Gaya Video:
                   </span>
-                  <div className="flex items-center gap-1.5">
+                  <div className="flex items-center gap-2 flex-wrap">
                     {VIDEO_STYLES.map((st) => {
                       const isSelected = selectedVideoStyle === st.id;
                       const isNeon = st.id === 'neon-cyber';
@@ -954,7 +978,7 @@ Respond ONLY with a valid JSON object matching this schema:
                           key={st.id}
                           type="button"
                           onClick={() => handleSelectVideoStyle(st.id)}
-                          className={`px-2.5 py-1 rounded-lg text-[11px] font-semibold transition-all flex items-center gap-1.5 border ${
+                          className={`px-3 py-1 rounded-full text-[11px] font-semibold transition-all flex items-center gap-1.5 border whitespace-nowrap shrink-0 ${
                             isSelected
                               ? isNeon
                                 ? 'bg-cyan-500/20 text-cyan-300 border-cyan-500/40 shadow-[0_0_12px_rgba(6,182,212,0.2)]'
@@ -963,7 +987,7 @@ Respond ONLY with a valid JSON object matching this schema:
                           }`}
                         >
                           {isNeon ? <Zap className="w-3 h-3 text-cyan-400" /> : <Film className="w-3 h-3 text-amber-400" />}
-                          <span>{st.badge}</span>
+                          <span>{st.name.split(' ')[0]} {st.badge}</span>
                         </button>
                       );
                     })}
@@ -1143,9 +1167,9 @@ Respond ONLY with a valid JSON object matching this schema:
             <div className="bg-neutral-900/40 backdrop-blur-2xl border border-white/5 rounded-3xl overflow-hidden flex flex-col shadow-2xl flex-1">
               
               {/* Header */}
-              <div className="px-6 py-4 border-b border-white/5 flex flex-col sm:flex-row sm:items-center justify-between gap-3 bg-black/30">
-                <div className="flex items-center space-x-3 text-neutral-300">
-                  <div className={`p-2 rounded-xl border ${
+              <div className="px-5 py-4 sm:px-6 border-b border-white/5 flex flex-col sm:flex-row sm:items-center justify-between gap-3.5 bg-black/30">
+                <div className="flex items-center space-x-3 text-neutral-300 min-w-0">
+                  <div className={`p-2.5 rounded-2xl border shrink-0 ${
                     selectedVideoStyle === 'neon-cyber'
                       ? 'bg-cyan-500/10 border-cyan-500/25 text-cyan-400'
                       : 'bg-amber-500/10 border-amber-500/25 text-amber-400'
@@ -1156,46 +1180,52 @@ Respond ONLY with a valid JSON object matching this schema:
                       <FileJson className="w-5 h-5" />
                     )}
                   </div>
-                  <div>
-                    <div className="flex items-center gap-2">
-                      <span className="text-xs font-bold tracking-widest text-neutral-300 uppercase">
-                        Full Video Prompts (3 Scenes JSON)
-                      </span>
-                      <span className={`text-[10px] px-2 py-0.5 rounded-full font-semibold border ${
+
+                  <div className="min-w-0">
+                    <h2 className="text-xs font-bold tracking-wider text-neutral-200 uppercase whitespace-nowrap">
+                      Full Video Prompts (JSON)
+                    </h2>
+                    
+                    {/* Clean Badges Row */}
+                    <div className="flex items-center gap-1.5 flex-wrap mt-1">
+                      <span className={`text-[10px] font-semibold px-2.5 py-0.5 rounded-full border whitespace-nowrap inline-flex items-center gap-1 ${
                         selectedVideoStyle === 'neon-cyber'
-                          ? 'bg-cyan-500/15 text-cyan-300 border-cyan-500/30 shadow-[0_0_8px_rgba(6,182,212,0.2)]'
-                          : 'bg-amber-500/15 text-amber-300 border-amber-500/30 shadow-[0_0_8px_rgba(245,158,11,0.2)]'
+                          ? 'bg-cyan-500/15 text-cyan-300 border-cyan-500/30 shadow-[0_0_8px_rgba(6,182,212,0.15)]'
+                          : 'bg-amber-500/15 text-amber-300 border-amber-500/30 shadow-[0_0_8px_rgba(245,158,11,0.15)]'
                       }`}>
-                        {selectedVideoStyle === 'neon-cyber' ? '⚡ Khas Neon 3D' : '🎬 Realistis Sinematik'}
+                        <span className={`w-1.5 h-1.5 rounded-full ${selectedVideoStyle === 'neon-cyber' ? 'bg-cyan-400' : 'bg-amber-400'}`} />
+                        <span>{selectedVideoStyle === 'neon-cyber' ? '⚡ Neon 3D' : '🎬 Sinematik'}</span>
                       </span>
-                      <span className="text-[10px] px-2 py-0.5 rounded-full font-semibold bg-white/5 text-neutral-300 border border-white/10">
-                        30s Total
+
+                      <span className="text-[10px] font-semibold px-2.5 py-0.5 rounded-full bg-white/5 text-neutral-300 border border-white/10 whitespace-nowrap inline-flex items-center gap-1">
+                        <span>30s Total</span>
+                        <span className="text-neutral-500">•</span>
+                        <span>3 Scenes</span>
+                      </span>
+
+                      <span className="text-[10px] font-mono px-2 py-0.5 rounded-full bg-white/[0.03] text-neutral-400 border border-white/5 whitespace-nowrap hidden sm:inline-block">
+                        Omni Gemini Video
                       </span>
                     </div>
-                    <span className="text-[11px] text-neutral-500 font-medium block mt-0.5">
-                      {selectedVideoStyle === 'neon-cyber'
-                        ? 'Full 3-Scene 3D Infographics Payload (10s/Scene • Pemisah Enter)'
-                        : 'Full 3-Scene Photorealistic Documentary Payload (10s/Scene • Pemisah Enter)'}
-                    </span>
                   </div>
                 </div>
 
-                <div className="flex items-center gap-2 self-start sm:self-auto">
+                <div className="flex items-center gap-2 self-start sm:self-auto shrink-0">
                   {scenes && scenes.length > 0 && (
                     <button
                       onClick={copyAllJson}
-                      className="px-4 py-2 rounded-xl bg-emerald-500/15 hover:bg-emerald-500/25 text-emerald-300 border border-emerald-500/30 text-xs font-semibold flex items-center space-x-2 transition-all active:scale-95 shadow-[0_0_12px_rgba(16,185,129,0.15)]"
+                      className="px-3.5 py-2 rounded-xl bg-emerald-500/15 hover:bg-emerald-500/25 text-emerald-300 border border-emerald-500/30 text-xs font-semibold flex items-center space-x-1.5 transition-all active:scale-95 shadow-[0_0_12px_rgba(16,185,129,0.15)] whitespace-nowrap"
                       title="Salin semua 3 scenes dengan pemisah enter"
                     >
                       {copied ? (
                         <>
                           <CheckCircle2 className="w-4 h-4 text-emerald-400" />
-                          <span>Copied Full JSON!</span>
+                          <span>Tersalin!</span>
                         </>
                       ) : (
                         <>
                           <Copy className="w-4 h-4" />
-                          <span>Copy Full Prompts (3 Scenes)</span>
+                          <span>Copy Full Prompts</span>
                         </>
                       )}
                     </button>
@@ -1204,7 +1234,7 @@ Respond ONLY with a valid JSON object matching this schema:
               </div>
 
               {/* Code Viewer */}
-              <div className="p-6 md:p-8 bg-[#050508]/80 flex-1 overflow-auto custom-scrollbar relative">
+              <div className="p-5 sm:p-6 md:p-8 bg-[#050508]/80 flex-1 overflow-auto custom-scrollbar relative">
                 <AnimatePresence mode="wait">
                   {scenes && scenes.length > 0 ? (
                     <motion.div
@@ -1214,9 +1244,14 @@ Respond ONLY with a valid JSON object matching this schema:
                       exit={{ opacity: 0, y: -8 }}
                       transition={{ duration: 0.25 }}
                     >
-                      <div className="flex items-center justify-between mb-3 text-[11px] font-mono text-neutral-500">
-                        <span>FULL_PRODUCTION_PROMPT_PAYLOAD.JSON</span>
-                        <span>Format: 3 Scenes Array (10s/Scene • Pemisah Enter)</span>
+                      <div className="flex items-center justify-between gap-2 mb-3 text-[11px] font-mono">
+                        <span className="text-neutral-400 truncate flex items-center gap-1.5 min-w-0">
+                          <FileJson className="w-3.5 h-3.5 text-neutral-500 shrink-0" />
+                          <span className="truncate">FULL_PRODUCTION_PROMPT_PAYLOAD.JSON</span>
+                        </span>
+                        <span className="text-[10px] font-sans font-medium px-2 py-0.5 rounded-full bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 whitespace-nowrap shrink-0">
+                          3 Scenes • 10s/Scene • Pemisah Enter
+                        </span>
                       </div>
 
                       <pre className="text-[12px] sm:text-[13px] leading-relaxed font-mono text-emerald-400/90 whitespace-pre-wrap break-words bg-black/60 p-5 rounded-2xl border border-white/5">
