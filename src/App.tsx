@@ -1,9 +1,38 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import { GoogleGenAI } from '@google/genai';
-import { FileJson, Sparkles, Copy, CheckCircle2, Video, AlertCircle, Lightbulb, Wand2, Key, X, Check, Search, ChevronRight, ChevronLeft, Compass, Filter, ArrowRight, Film, Volume2, Layers, Download, MessageSquare, Mic } from 'lucide-react';
+import { FileJson, Sparkles, Copy, CheckCircle2, Video, AlertCircle, Lightbulb, Wand2, Key, X, Check, Search, ChevronRight, ChevronLeft, Compass, Filter, ArrowRight, Film, Volume2, Layers, Download, MessageSquare, Mic, Zap } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 import { CONTENT_IDEAS, GOLDGEN_TOPICS, formatTopicToIdea, GoldgenTopic } from './ideas';
-import { ScenePrompt, VideoPayload, VoiceOver } from './types';
+import { ScenePrompt, VideoPayload, VoiceOver, VideoStyleId, VideoStyleOption } from './types';
+
+export const VIDEO_STYLES: VideoStyleOption[] = [
+  {
+    id: 'neon-cyber',
+    name: 'Khas Neon 3D Infografis',
+    badge: '⚡ Khas Neon',
+    tagline: 'Ultra-modern 3D motion graphics & glowing cyan/gold telemetry HUD',
+    description: 'Visual 3D canggih dengan aksen neon emas bercahaya, garis telemetry HUD cyan futuristik, isometric cutaway, dan motion graphics berenergi tinggi.',
+    accent: 'cyan',
+    visual_aesthetic: 'Ultra-modern 3D motion graphics, sleek glowing neon HUD infographic overlays, kinetic digital telemetry, glowing luminous accents, trendy glassmorphism, isometric cutaway cross-section. High contrast with radiant gold highlights.',
+    color_palette: 'Luminous 24k gold (#FFD700), dark slate riverbed (#1E232A), electric cyan telemetry (#00E5FF), neon amber accent (#FF9900)',
+    render_and_lighting: 'Octane render aesthetic, ray-traced subsurface scattering, glowing neon rim lighting, volumetric light beams, 8k texture fidelity',
+    sample_labels: ['[SCAN: LOW-VELOCITY EDDY]', '[DENSITY: 19.3 g/cm³]'],
+    sample_sfx: ['Digital HUD telemetry blip', 'Sub-bass whoosh transition', 'Crisp high-frequency chime'],
+  },
+  {
+    id: 'photorealistic',
+    name: 'Realistis Sinematik Dokumenter',
+    badge: '🎬 Sinematik Natural',
+    tagline: '8K natural documentary & authentic macro geology',
+    description: 'Gaya dokumenter National Geographic dengan pencahayaan alami, caustics air jernih, tekstur batuan otentik tanpa efek HUD fiksi ilmiah.',
+    accent: 'amber',
+    visual_aesthetic: 'Photorealistic cinematic documentary, 8K ultra-detailed geological simulation, natural physical macro cinematography, authentic mineral and rock textures, grounded tactile realism. Strictly NO futuristic holograms, NO sci-fi neon HUDs, NO cybernetic telemetry overlays.',
+    color_palette: 'Natural raw 24k placer gold (#D4AF37), deep wet slate & bedrock gray (#2A2E35), crystal-clear mountain water (#4A7C59 / #3D5A80), warm natural sunlight (#FFF2B2)',
+    render_and_lighting: 'Cinematic 35mm anamorphic lens realism, natural golden hour / dappled water caustics, physically-based rendering (PBR), shallow depth of field, authentic macro lens bokeh, high dynamic range',
+    sample_labels: ['INSIDE BEND: LOW VELOCITY', 'GOLD DEPOSITION ZONE'],
+    sample_sfx: ['Rushing mountain water stream', 'Heavy mineral settling clatter', 'Crisp metallic clink of gold against bedrock'],
+  },
+];
 
 export const VOICE_PERSONAS = [
   {
@@ -41,8 +70,16 @@ const CANDIDATE_MODELS = ['gemini-3.6-flash', 'gemini-2.5-flash', 'gemini-2.0-fl
 export default function App() {
   const [userApiKey, setUserApiKey] = useState(() => localStorage.getItem('user_gemini_api_key') || '');
   const [showApiSettings, setShowApiSettings] = useState(false);
+  const [selectedVideoStyle, setSelectedVideoStyle] = useState<VideoStyleId>(() => {
+    return (localStorage.getItem('user_video_style') as VideoStyleId) || 'neon-cyber';
+  });
   const [selectedVoicePersona, setSelectedVoicePersona] = useState<string>('geologist');
   const [copiedVoiceOver, setCopiedVoiceOver] = useState(false);
+
+  const handleSelectVideoStyle = (styleId: VideoStyleId) => {
+    setSelectedVideoStyle(styleId);
+    localStorage.setItem('user_video_style', styleId);
+  };
   
   // Topic catalog modal states
   const [showTopicCatalog, setShowTopicCatalog] = useState(false);
@@ -166,17 +203,28 @@ export default function App() {
 
     try {
       const activePersonaObj = VOICE_PERSONAS.find((p) => p.id === selectedVoicePersona) || VOICE_PERSONAS[0];
+      const activeStyleObj = VIDEO_STYLES.find((s) => s.id === selectedVideoStyle) || VIDEO_STYLES[0];
+      const isNeon = activeStyleObj.id === 'neon-cyber';
       const ai = getAiInstance();
-      const response = await generateWithFallback(ai, `You are an expert cinematic director for viral, photorealistic short-form educational videos (TikTok/Reels/Shorts).
+
+      const styleInstruction = isNeon
+        ? `CRITICAL VISUAL STYLE (SIGNATURE NEON 3D INFOGRAPHIC):
+        - Signature visual style: Ultra-modern 3D motion graphics, luminous glowing 24k gold shaders, sleek cyan (#00E5FF) and amber HUD telemetry overlays, isometric cross-section cutaways, and dynamic kinetic typography/infographics.
+        - Distinctive aesthetic: Vibrant contrast with radiant gold highlights, glowing fluid particles, holographic measurement lines, and stylish glassmorphism.
+        - Retention Hook in Scene 1: Must open with an immediate dynamic 3D hook in seconds 0-2 (e.g., explosive 3D isometric cutaway plunge revealing glowing 24k gold trapped under high-pressure river hydraulics).`
+        : `CRITICAL VISUAL STYLE (REALISTIC & GROUNDED DOCUMENTARY):
+        - Focus on photorealistic nature & geological realism: natural sunlight (golden hour, dappled light through crystal-clear mountain water), authentic sediment physics, tangible mineral textures (raw 24k placer gold luster, oxidized quartz, fractured bedrock schist).
+        - STRICTLY AVOID: sci-fi holograms, glowing futuristic neon HUDs, cybernetic telemetry overlays, or artificial tech animations. Ground the story in realistic physical cross-sections, macro physical close-ups, and natural documentary cinematography (National Geographic / BBC Earth style).
+        - Retention Hook in Scene 1: Scene 1 MUST start with an immediate high-impact curiosity hook in the first 1-2 seconds (e.g., extreme macro reveal of raw gold trapped in jagged riverbed cracks under sunlight caustics).`;
+
+      const response = await generateWithFallback(ai, `You are an expert cinematic director for viral, ${isNeon ? 'high-tech 3D infographic' : 'photorealistic short-form educational'} videos (TikTok/Reels/Shorts).
         Based on the following idea, create a detailed, highly visual video concept structured exactly into 3 sequential scenes (8 seconds each, 24 seconds total).
         Write the descriptions in English for high-end AI video generators (Runway Gen-3, Sora, Kling, Veo).
 
-        CRITICAL VISUAL STYLE (REALISTIC & GROUNDED):
-        - Focus on photorealistic nature & geological realism: natural sunlight (golden hour, dappled light through crystal-clear mountain water), authentic sediment physics, tangible mineral textures (raw 24k placer gold luster, oxidized quartz, fractured bedrock schist).
-        - STRICTLY AVOID: sci-fi holograms, glowing futuristic neon HUDs, cybernetic telemetry overlays, or artificial tech animations. Ground the story in realistic physical cross-sections, macro physical close-ups, and natural documentary cinematography (National Geographic / BBC Earth style).
+        ${styleInstruction}
 
         CRITICAL VIRALITY RULES (FIRST-SECOND HOOK & SEAMLESS LOOP):
-        - Scene 1 MUST start with an immediate high-impact curiosity hook in the first 1-2 seconds (e.g., an extreme macro reveal of raw gold trapped in jagged riverbed cracks, a dramatic water plunge into a hidden eddy current, or an astonishing tangible contrast).
+        - Scene 1 MUST start with an immediate high-impact curiosity hook in the first 1-2 seconds.
         - The voice-over hook must provoke instant curiosity and stop the viewer from scrolling.
         - Scene 3 MUST end with a natural physical camera transition that seamlessly loops back to the opening framing of Scene 1.
 
@@ -190,13 +238,13 @@ export default function App() {
         [Title of the Video]
         
         1. Scene 1 (The Hook):
-           - Visuals: [Detailed photorealistic visual description emphasizing tangible macro geology, natural lighting, and an immediate visual hook...]
+           - Visuals: [Detailed visual description emphasizing ${isNeon ? 'ultra-modern 3D motion graphics, glowing gold, cyan telemetry,' : 'tangible macro geology, natural lighting,'} and an immediate visual hook...]
            - Voice Over: [Spoken hook script by ${activePersonaObj.name} strictly 18-22 words grabbing attention in the first 2 seconds...]
         2. Scene 2 (The Core):
-           - Visuals: [Detailed photorealistic visual description demonstrating the physical mechanism or geological principle...]
+           - Visuals: [Detailed visual description demonstrating the physical mechanism or geological principle...]
            - Voice Over: [Spoken script by ${activePersonaObj.name} strictly 18-22 words...]
         3. Scene 3 (The Loop):
-           - Visuals: [Detailed photorealistic visual description concluding the insight and ending in a camera position that loops into Scene 1...]
+           - Visuals: [Detailed visual description concluding the insight and ending in a camera position that loops into Scene 1...]
            - Voice Over: [Spoken script by ${activePersonaObj.name} strictly 18-22 words...]`);
 
       if (response.text) {
@@ -218,9 +266,12 @@ export default function App() {
 
     try {
       const activePersonaObj = VOICE_PERSONAS.find((p) => p.id === selectedVoicePersona) || VOICE_PERSONAS[0];
+      const activeStyleObj = VIDEO_STYLES.find((s) => s.id === selectedVideoStyle) || VIDEO_STYLES[0];
+      const isNeon = activeStyleObj.id === 'neon-cyber';
       const ai = getAiInstance();
-      const response = await generateWithFallback(ai, `You are an elite AI video generation prompt engineer and cinematic documentary director.
-Create a production payload for a viral, photorealistic 3-scene educational video based on the following topic.
+
+      const response = await generateWithFallback(ai, `You are an elite AI video generation prompt engineer and ${isNeon ? '3D motion graphics director specializing in high-tech viral infographics' : 'cinematic documentary director'}.
+Create a production payload for a viral, ${isNeon ? 'ultra-modern 3D infographic' : 'photorealistic cinematic documentary'} 3-scene educational video based on the following topic.
 
 Topic: ${topic}
 
@@ -229,16 +280,16 @@ CRITICAL RULES:
 2. "scenes" MUST be an array of EXACTLY 3 sequential scenes (Scene 1: Hook, Scene 2: Core, Scene 3: Loop), 8 seconds each.
 3. PURITY OF VIDEO PROMPT: Inside "scenes", DO NOT include any social media captions, hashtags, project titles, marketing copy, or emojis. Every scene object must be strictly technical AI video generator instructions.
 4. UNIFORM SCHEMA: Each scene in "scenes" MUST have the EXACT SAME uniform JSON structure so each scene can be used independently by Runway Gen-3, Sora, Kling, Veo, or Luma.
-5. PHOTOREALISTIC STYLE CONSISTENCY (STRICTLY NO TECH/SCI-FI HUDs):
-   - Every scene must share the same locked realistic aesthetic, color palette, and render parameters in its "style_consistency" object.
-   - "visual_aesthetic": "Photorealistic cinematic documentary, 8K ultra-detailed geological simulation, natural physical macro cinematography, authentic mineral and rock textures, grounded tactile realism. Strictly NO futuristic holograms, NO sci-fi neon HUDs, NO cybernetic telemetry overlays, NO digital glitches."
-   - "color_palette": "Natural raw 24k placer gold (#D4AF37), deep wet slate & bedrock gray (#2A2E35), crystal-clear mountain water (#4A7C59 / #3D5A80), warm natural sunlight (#FFF2B2)"
-   - "render_and_lighting": "Cinematic 35mm anamorphic lens realism, natural golden hour / dappled water caustics, physically-based rendering (PBR), shallow depth of field, authentic macro lens bokeh, high dynamic range."
+5. STYLE CONSISTENCY (${isNeon ? 'SIGNATURE NEON 3D INFOGRAPHIC' : 'PHOTOREALISTIC DOCUMENTARY'}):
+   - Every scene must share the exact same locked aesthetic, color palette, and render parameters in its "style_consistency" object.
+   - "visual_aesthetic": "${activeStyleObj.visual_aesthetic}"
+   - "color_palette": "${activeStyleObj.color_palette}"
+   - "render_and_lighting": "${activeStyleObj.render_and_lighting}"
 6. CONTINUITY & SEAMLESS TRANSITIONS: Every scene must define its "continuity" object with timeline_segment, visual_anchor, transition_in, and transition_out so the clips connect seamlessly on physical action and Scene 3 loops back to Scene 1.
 7. FIRST-SECOND AUDIENCE RETENTION:
-   - Scene 1's visual prompt and camera movement MUST grab the audience in the first 0-2 seconds with intense visual curiosity, dynamic physical motion, and tangible macro detail.
-8. MINIMALIST DOCUMENTARY LABELS: "on_screen_text_labels" must be clean, subtle documentary lower-third text (e.g. "INSIDE BEND: LOW VELOCITY"), NOT futuristic neon HUD codes.
-9. ORGANIC SOUND EFFECTS: "sound_effects" must be rich organic Foley design (e.g. rushing mountain river, underwater low rumble, crisp clink of heavy raw gold nugget on bedrock, gravel crunch), NOT sci-fi lasers or digital beeps.
+   - Scene 1's visual prompt and camera movement MUST grab the audience in the first 0-2 seconds with intense visual curiosity, dynamic physical motion, and ${isNeon ? 'striking glowing gold contrast' : 'tangible macro detail'}.
+8. ${isNeon ? 'CYBER HUD TELEMETRY LABELS' : 'MINIMALIST DOCUMENTARY LABELS'}: "on_screen_text_labels" must be ${isNeon ? 'sleek glowing telemetry HUD callouts or metric tags (e.g. ["[SCAN: LOW-VELOCITY EDDY]", "[DENSITY: 19.3 g/cm³]"])' : 'clean, subtle documentary lower-third text (e.g. ["INSIDE BEND: LOW VELOCITY", "GOLD DEPOSITION ZONE"])'}.
+9. ${isNeon ? 'FUTURISTIC SOUND EFFECTS' : 'ORGANIC SOUND EFFECTS'}: "sound_effects" must be ${isNeon ? 'futuristic digital telemetry whooshes, UI clicks, sub-bass riser, and crisp metallic resonance' : 'rich organic Foley design (e.g. rushing mountain river, underwater low rumble, crisp clink of heavy raw gold nugget on bedrock, gravel crunch)'}.
 10. VOICE-OVER CHARACTER & DELIVERY CONSISTENCY:
     - Every scene MUST use the EXACT SAME narrator character for seamless audio continuity:
       * "persona": "${activePersonaObj.name}"
@@ -257,21 +308,21 @@ Respond ONLY with a valid JSON object matching this schema:
     {
       "scene_number": 1,
       "duration": "8s",
-      "visual_prompt": "Photorealistic cinematic 8k macro prompt in English describing natural environment, authentic mineral textures, physical fluid hydrodynamics, and realistic lighting...",
+      "visual_prompt": "Detailed generative video prompt in English describing ${isNeon ? '3D visuals, glowing neon accents, isometric motion, and environment...' : 'natural environment, authentic mineral textures, physical fluid hydrodynamics, and realistic lighting...'}",
       "camera_movement": "Specific cinematic camera trajectory instruction in English with immediate dynamic plunge or macro reveal...",
       "style_consistency": {
-        "visual_aesthetic": "Photorealistic cinematic documentary, 8K ultra-detailed geological simulation, natural physical macro cinematography, authentic mineral and rock textures, grounded tactile realism. Strictly NO futuristic holograms, NO sci-fi neon HUDs, NO cybernetic telemetry overlays.",
-        "color_palette": "Natural raw 24k placer gold (#D4AF37), deep wet slate & bedrock gray (#2A2E35), crystal-clear mountain water (#4A7C59 / #3D5A80), warm natural sunlight (#FFF2B2)",
-        "render_and_lighting": "Cinematic 35mm anamorphic lens realism, natural golden hour / dappled water caustics, physically-based rendering (PBR), shallow depth of field, authentic macro lens bokeh, high dynamic range"
+        "visual_aesthetic": "${activeStyleObj.visual_aesthetic}",
+        "color_palette": "${activeStyleObj.color_palette}",
+        "render_and_lighting": "${activeStyleObj.render_and_lighting}"
       },
       "continuity": {
         "timeline_segment": "0:00 - 0:08 (The Hook)",
-        "visual_anchor": "Establishing baseline photorealistic riverbed terrain and authentic raw 24k gold mineral luster",
-        "transition_in": "Instant high-speed macro plunge into scene grabbing attention in second 1",
+        "visual_anchor": "Establishing baseline ${isNeon ? 'isometric terrain and locked 24k gold luminous material shader' : 'photorealistic riverbed terrain and authentic raw 24k gold mineral luster'}",
+        "transition_in": "Instant high-speed plunge into scene grabbing attention in second 1",
         "transition_out": "Camera tilts down smoothly toward a massive submerged river boulder, tracking downstream eddy currents"
       },
-      "on_screen_text_labels": ["INSIDE BEND: LOW VELOCITY", "GOLD DEPOSITION ZONE"],
-      "sound_effects": ["Rushing mountain water stream", "Sub-bass underwater turbulence"],
+      "on_screen_text_labels": ${JSON.stringify(activeStyleObj.sample_labels)},
+      "sound_effects": ${JSON.stringify(activeStyleObj.sample_sfx.slice(0, 2))},
       "voice_over": {
         "persona": "${activePersonaObj.name}",
         "tone_and_delivery": "${activePersonaObj.gender_tone}",
@@ -283,21 +334,21 @@ Respond ONLY with a valid JSON object matching this schema:
     {
       "scene_number": 2,
       "duration": "8s",
-      "visual_prompt": "Photorealistic cinematic 8k macro prompt in English describing natural environment, authentic mineral textures, physical fluid hydrodynamics, and realistic lighting...",
+      "visual_prompt": "Detailed generative video prompt in English describing ${isNeon ? '3D visuals, glowing neon accents, and fluid mechanics...' : 'natural environment, authentic mineral textures, physical fluid hydrodynamics...'}",
       "camera_movement": "Specific cinematic camera trajectory instruction in English...",
       "style_consistency": {
-        "visual_aesthetic": "Photorealistic cinematic documentary, 8K ultra-detailed geological simulation, natural physical macro cinematography, authentic mineral and rock textures, grounded tactile realism. Strictly NO futuristic holograms, NO sci-fi neon HUDs, NO cybernetic telemetry overlays.",
-        "color_palette": "Natural raw 24k placer gold (#D4AF37), deep wet slate & bedrock gray (#2A2E35), crystal-clear mountain water (#4A7C59 / #3D5A80), warm natural sunlight (#FFF2B2)",
-        "render_and_lighting": "Cinematic 35mm anamorphic lens realism, natural golden hour / dappled water caustics, physically-based rendering (PBR), shallow depth of field, authentic macro lens bokeh, high dynamic range"
+        "visual_aesthetic": "${activeStyleObj.visual_aesthetic}",
+        "color_palette": "${activeStyleObj.color_palette}",
+        "render_and_lighting": "${activeStyleObj.render_and_lighting}"
       },
       "continuity": {
         "timeline_segment": "0:08 - 0:16 (The Core)",
-        "visual_anchor": "Maintains identical crystal-clear water caustics and wet bedrock textures from Scene 1",
+        "visual_anchor": "Maintains identical ${isNeon ? 'water fluid shaders and bedrock geometry' : 'crystal-clear water caustics and wet bedrock textures'} from Scene 1",
         "transition_in": "Seamless match cut matching downward camera momentum, penetrating water behind boulder",
         "transition_out": "Camera pushes deep into submerged schist crevices where current drops to near zero"
       },
-      "on_screen_text_labels": ["BOULDER EDDY CURRENT", "HEAVY MINERAL DROPOUT"],
-      "sound_effects": ["Muffled underwater rush", "Heavy mineral settling clatter"],
+      "on_screen_text_labels": ${JSON.stringify(activeStyleObj.sample_labels)},
+      "sound_effects": ${JSON.stringify(activeStyleObj.sample_sfx.slice(0, 2))},
       "voice_over": {
         "persona": "${activePersonaObj.name}",
         "tone_and_delivery": "${activePersonaObj.gender_tone}",
@@ -309,21 +360,21 @@ Respond ONLY with a valid JSON object matching this schema:
     {
       "scene_number": 3,
       "duration": "8s",
-      "visual_prompt": "Photorealistic cinematic 8k macro prompt in English describing natural environment, authentic mineral textures, physical fluid hydrodynamics, and realistic lighting...",
+      "visual_prompt": "Detailed generative video prompt in English describing ${isNeon ? '3D visuals, glowing neon accents, and coarse gold settling...' : 'natural environment, authentic mineral textures, physical fluid hydrodynamics...'}",
       "camera_movement": "Specific cinematic camera trajectory instruction in English...",
       "style_consistency": {
-        "visual_aesthetic": "Photorealistic cinematic documentary, 8K ultra-detailed geological simulation, natural physical macro cinematography, authentic mineral and rock textures, grounded tactile realism. Strictly NO futuristic holograms, NO sci-fi neon HUDs, NO cybernetic telemetry overlays.",
-        "color_palette": "Natural raw 24k placer gold (#D4AF37), deep wet slate & bedrock gray (#2A2E35), crystal-clear mountain water (#4A7C59 / #3D5A80), warm natural sunlight (#FFF2B2)",
-        "render_and_lighting": "Cinematic 35mm anamorphic lens realism, natural golden hour / dappled water caustics, physically-based rendering (PBR), shallow depth of field, authentic macro lens bokeh, high dynamic range"
+        "visual_aesthetic": "${activeStyleObj.visual_aesthetic}",
+        "color_palette": "${activeStyleObj.color_palette}",
+        "render_and_lighting": "${activeStyleObj.render_and_lighting}"
       },
       "continuity": {
         "timeline_segment": "0:16 - 0:24 (The Loop & Payoff)",
-        "visual_anchor": "Extreme macro view of coarse gold nuggets resting in natural schist riffle trap",
+        "visual_anchor": "${isNeon ? 'Continues microscopic view; identical luminous 24k gold reflectance' : 'Extreme macro view of coarse gold nuggets resting in natural schist riffle trap'}",
         "transition_in": "Locks onto deep bedrock crevice trap",
         "transition_out": "Camera swoops upward breaking surface water, re-aligning with Scene 1's starting aerial angle for an infinite visual loop"
       },
-      "on_screen_text_labels": ["NATURAL BEDROCK RIFFLE", "COARSE GOLD TRAP"],
-      "sound_effects": ["Crisp tactile metallic clink of gold against bedrock", "Water surface breach splash"],
+      "on_screen_text_labels": ${JSON.stringify(activeStyleObj.sample_labels)},
+      "sound_effects": ${JSON.stringify(activeStyleObj.sample_sfx.slice(0, 2))},
       "voice_over": {
         "persona": "${activePersonaObj.name}",
         "tone_and_delivery": "${activePersonaObj.gender_tone}",
@@ -517,6 +568,86 @@ Respond ONLY with a valid JSON object matching this schema:
           {/* Input Section */}
           <div className="space-y-6">
             
+            {/* 0. Video Style / Version Selector Card */}
+            <motion.div 
+              initial={{ opacity: 0, y: -10 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: 0.15, duration: 0.5 }}
+              className="bg-neutral-900/50 backdrop-blur-2xl border border-white/10 rounded-3xl p-5 md:p-6 shadow-2xl relative overflow-hidden"
+            >
+              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 mb-4">
+                <div className="flex items-center space-x-2.5">
+                  <div className="w-8 h-8 rounded-xl bg-gradient-to-br from-cyan-500/20 via-amber-500/20 to-orange-500/20 flex items-center justify-center border border-white/10">
+                    <Zap className="w-4 h-4 text-cyan-400" />
+                  </div>
+                  <div>
+                    <h2 className="text-xs font-bold text-neutral-200 tracking-wider uppercase flex items-center gap-2">
+                      Pilihan Versi Gaya Video
+                      <span className="text-[10px] px-2 py-0.5 rounded-full bg-white/5 border border-white/10 text-neutral-400 font-normal">
+                        Preset Visual AI
+                      </span>
+                    </h2>
+                    <p className="text-[11px] text-neutral-400 mt-0.5">
+                      Pilih format visual khas neon berenergi tinggi atau sinematik dokumenter natural
+                    </p>
+                  </div>
+                </div>
+              </div>
+
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                {VIDEO_STYLES.map((style) => {
+                  const isSelected = selectedVideoStyle === style.id;
+                  const isNeon = style.id === 'neon-cyber';
+                  return (
+                    <button
+                      key={style.id}
+                      type="button"
+                      onClick={() => handleSelectVideoStyle(style.id)}
+                      className={`p-4 rounded-2xl border text-left transition-all relative flex flex-col justify-between group ${
+                        isSelected
+                          ? isNeon
+                            ? 'bg-cyan-500/10 border-cyan-500/50 text-cyan-200 shadow-[0_0_20px_rgba(6,182,212,0.15)] ring-1 ring-cyan-500/40'
+                            : 'bg-amber-500/10 border-amber-500/50 text-amber-200 shadow-[0_0_20px_rgba(245,158,11,0.15)] ring-1 ring-amber-500/40'
+                          : 'bg-black/40 border-white/5 text-neutral-400 hover:bg-white/5 hover:text-neutral-300'
+                      }`}
+                    >
+                      <div>
+                        <div className="flex items-center justify-between mb-1.5">
+                          <span className={`text-xs font-bold flex items-center gap-1.5 ${
+                            isSelected ? (isNeon ? 'text-cyan-300' : 'text-amber-300') : 'text-neutral-200'
+                          }`}>
+                            {isNeon ? <Zap className="w-3.5 h-3.5 text-cyan-400" /> : <Film className="w-3.5 h-3.5 text-amber-400" />}
+                            {style.name}
+                          </span>
+                          <span className={`text-[10px] font-semibold px-2 py-0.5 rounded-md ${
+                            isSelected 
+                              ? (isNeon ? 'bg-cyan-500/20 text-cyan-300 border border-cyan-500/30' : 'bg-amber-500/20 text-amber-300 border border-amber-500/30')
+                              : 'bg-white/5 text-neutral-500 border border-white/5'
+                          }`}>
+                            {style.badge}
+                          </span>
+                        </div>
+                        <p className="text-[11px] text-neutral-400 leading-relaxed">
+                          {style.description}
+                        </p>
+                      </div>
+
+                      <div className="mt-3 pt-2.5 border-t border-white/5 flex items-center justify-between text-[10px]">
+                        <span className={`font-medium ${isSelected ? (isNeon ? 'text-cyan-400/90' : 'text-amber-400/90') : 'text-neutral-500'}`}>
+                          {style.tagline}
+                        </span>
+                        {isSelected && (
+                          <div className={`p-0.5 rounded-full ${isNeon ? 'bg-cyan-500/20 text-cyan-400' : 'bg-amber-500/20 text-amber-400'}`}>
+                            <Check className="w-3.5 h-3.5 shrink-0" />
+                          </div>
+                        )}
+                      </div>
+                    </button>
+                  );
+                })}
+              </div>
+            </motion.div>
+            
             {/* 1. Idea Generator */}
             <motion.div 
               initial={{ opacity: 0, x: -20 }}
@@ -610,41 +741,75 @@ Respond ONLY with a valid JSON object matching this schema:
                 placeholder="Describe your highly detailed video concept here..."
               />
 
-              {/* Voice-Over Character Consistency Selector */}
-              <div className="mt-5 mb-2 space-y-2.5 relative z-10">
-                <div className="flex items-center justify-between text-xs">
-                  <span className="text-neutral-300 font-semibold flex items-center gap-1.5">
-                    <Mic className="w-3.5 h-3.5 text-amber-400" />
-                    Karakter Voice Over (Konsisten 3 Scene):
+              {/* Quick Style & Voice-Over Controls */}
+              <div className="mt-5 mb-2 space-y-3.5 relative z-10">
+                {/* Style Switcher Bar in Step 2 */}
+                <div className="flex flex-wrap items-center justify-between gap-2 pb-2.5 border-b border-white/5">
+                  <span className="text-neutral-300 font-semibold text-xs flex items-center gap-1.5">
+                    <Film className="w-3.5 h-3.5 text-amber-400" />
+                    Versi Gaya Video:
                   </span>
-                  <span className="text-[11px] text-amber-400/80 font-mono">18-22 kata / scene (8s)</span>
+                  <div className="flex items-center gap-1.5">
+                    {VIDEO_STYLES.map((st) => {
+                      const isSelected = selectedVideoStyle === st.id;
+                      const isNeon = st.id === 'neon-cyber';
+                      return (
+                        <button
+                          key={st.id}
+                          type="button"
+                          onClick={() => handleSelectVideoStyle(st.id)}
+                          className={`px-2.5 py-1 rounded-lg text-[11px] font-semibold transition-all flex items-center gap-1.5 border ${
+                            isSelected
+                              ? isNeon
+                                ? 'bg-cyan-500/20 text-cyan-300 border-cyan-500/40 shadow-[0_0_12px_rgba(6,182,212,0.2)]'
+                                : 'bg-amber-500/20 text-amber-300 border-amber-500/40 shadow-[0_0_12px_rgba(245,158,11,0.2)]'
+                              : 'bg-black/40 text-neutral-400 border-white/5 hover:text-neutral-300 hover:bg-white/5'
+                          }`}
+                        >
+                          {isNeon ? <Zap className="w-3 h-3 text-cyan-400" /> : <Film className="w-3 h-3 text-amber-400" />}
+                          <span>{st.badge}</span>
+                        </button>
+                      );
+                    })}
+                  </div>
                 </div>
-                <div className="grid grid-cols-1 sm:grid-cols-3 gap-2">
-                  {VOICE_PERSONAS.map((vp) => {
-                    const isSelected = selectedVoicePersona === vp.id;
-                    return (
-                      <button
-                        key={vp.id}
-                        type="button"
-                        onClick={() => setSelectedVoicePersona(vp.id)}
-                        className={`p-3 rounded-2xl border text-left transition-all relative flex flex-col justify-between ${
-                          isSelected
-                            ? 'bg-amber-500/15 border-amber-500/50 text-amber-200 shadow-[0_0_15px_rgba(245,158,11,0.15)] ring-1 ring-amber-500/30'
-                            : 'bg-black/40 border-white/5 text-neutral-400 hover:bg-white/5 hover:text-neutral-300'
-                        }`}
-                      >
-                        <div>
-                          <div className="text-xs font-bold flex items-center justify-between">
-                            <span>{vp.name}</span>
-                            {isSelected && <Check className="w-3.5 h-3.5 text-amber-400 shrink-0" />}
+
+                {/* Voice-Over Character Consistency Selector */}
+                <div className="space-y-2">
+                  <div className="flex items-center justify-between text-xs">
+                    <span className="text-neutral-300 font-semibold flex items-center gap-1.5">
+                      <Mic className="w-3.5 h-3.5 text-amber-400" />
+                      Karakter Voice Over (Konsisten 3 Scene):
+                    </span>
+                    <span className="text-[11px] text-amber-400/80 font-mono">18-22 kata / scene (8s)</span>
+                  </div>
+                  <div className="grid grid-cols-1 sm:grid-cols-3 gap-2">
+                    {VOICE_PERSONAS.map((vp) => {
+                      const isSelected = selectedVoicePersona === vp.id;
+                      return (
+                        <button
+                          key={vp.id}
+                          type="button"
+                          onClick={() => setSelectedVoicePersona(vp.id)}
+                          className={`p-3 rounded-2xl border text-left transition-all relative flex flex-col justify-between ${
+                            isSelected
+                              ? 'bg-amber-500/15 border-amber-500/50 text-amber-200 shadow-[0_0_15px_rgba(245,158,11,0.15)] ring-1 ring-amber-500/30'
+                              : 'bg-black/40 border-white/5 text-neutral-400 hover:bg-white/5 hover:text-neutral-300'
+                          }`}
+                        >
+                          <div>
+                            <div className="text-xs font-bold flex items-center justify-between">
+                              <span>{vp.name}</span>
+                              {isSelected && <Check className="w-3.5 h-3.5 text-amber-400 shrink-0" />}
+                            </div>
+                            <div className="text-[10px] text-neutral-500 mt-1 line-clamp-2 leading-relaxed">
+                              {vp.subtitle}
+                            </div>
                           </div>
-                          <div className="text-[10px] text-neutral-500 mt-1 line-clamp-2 leading-relaxed">
-                            {vp.subtitle}
-                          </div>
-                        </div>
-                      </button>
-                    );
-                  })}
+                        </button>
+                      );
+                    })}
+                  </div>
                 </div>
               </div>
               
@@ -652,8 +817,11 @@ Respond ONLY with a valid JSON object matching this schema:
                 whileHover={{ scale: 1.01 }}
                 whileTap={{ scale: 0.98 }}
                 onClick={generatePrompt}
-                disabled={isGenerating || !topic.trim()}
-                className="mt-6 w-full py-4 px-4 bg-gradient-to-r from-amber-500 to-orange-500 hover:from-amber-400 hover:to-orange-400 disabled:from-neutral-800 disabled:to-neutral-800 disabled:text-neutral-500 text-white font-bold rounded-2xl flex items-center justify-center space-x-2 transition-all shadow-[0_4px_20px_rgba(245,158,11,0.25)] relative z-10"
+                className={`mt-6 w-full py-4 px-4 font-bold rounded-2xl flex items-center justify-center space-x-2 transition-all relative z-10 disabled:from-neutral-800 disabled:to-neutral-800 disabled:text-neutral-500 text-white ${
+                  selectedVideoStyle === 'neon-cyber'
+                    ? 'bg-gradient-to-r from-cyan-500 via-blue-600 to-amber-500 hover:from-cyan-400 hover:via-blue-500 hover:to-amber-400 shadow-[0_4px_25px_rgba(6,182,212,0.3)]'
+                    : 'bg-gradient-to-r from-amber-500 to-orange-500 hover:from-amber-400 hover:to-orange-400 shadow-[0_4px_20px_rgba(245,158,11,0.25)]'
+                }`}
               >
                 {isGenerating ? (
                   <>
@@ -781,15 +949,34 @@ Respond ONLY with a valid JSON object matching this schema:
               {/* Header */}
               <div className="px-6 py-4 border-b border-white/5 flex flex-col sm:flex-row sm:items-center justify-between gap-3 bg-black/30">
                 <div className="flex items-center space-x-3 text-neutral-300">
-                  <div className="p-2 bg-emerald-500/10 rounded-xl border border-emerald-500/20 text-emerald-400">
-                    <FileJson className="w-5 h-5" />
+                  <div className={`p-2 rounded-xl border ${
+                    selectedVideoStyle === 'neon-cyber'
+                      ? 'bg-cyan-500/10 border-cyan-500/25 text-cyan-400'
+                      : 'bg-amber-500/10 border-amber-500/25 text-amber-400'
+                  }`}>
+                    {selectedVideoStyle === 'neon-cyber' ? (
+                      <Zap className="w-5 h-5" />
+                    ) : (
+                      <FileJson className="w-5 h-5" />
+                    )}
                   </div>
                   <div>
-                    <span className="text-xs font-bold tracking-widest text-neutral-300 uppercase block">
-                      Per-Scene Video Prompts (JSON)
-                    </span>
-                    <span className="text-[11px] text-neutral-500 font-medium">
-                      Photorealistic 8s Cinematic Scene Prompts for AI Video Generators
+                    <div className="flex items-center gap-2">
+                      <span className="text-xs font-bold tracking-widest text-neutral-300 uppercase">
+                        Per-Scene Video Prompts (JSON)
+                      </span>
+                      <span className={`text-[10px] px-2 py-0.5 rounded-full font-semibold border ${
+                        selectedVideoStyle === 'neon-cyber'
+                          ? 'bg-cyan-500/15 text-cyan-300 border-cyan-500/30 shadow-[0_0_8px_rgba(6,182,212,0.2)]'
+                          : 'bg-amber-500/15 text-amber-300 border-amber-500/30 shadow-[0_0_8px_rgba(245,158,11,0.2)]'
+                      }`}>
+                        {selectedVideoStyle === 'neon-cyber' ? '⚡ Khas Neon 3D' : '🎬 Realistis Sinematik'}
+                      </span>
+                    </div>
+                    <span className="text-[11px] text-neutral-500 font-medium block mt-0.5">
+                      {selectedVideoStyle === 'neon-cyber'
+                        ? '3D Motion Graphics & Cyan Telemetry HUD (8s per Scene)'
+                        : 'Photorealistic 8s Cinematic Scene Prompts for AI Video Generators'}
                     </span>
                   </div>
                 </div>
@@ -845,11 +1032,17 @@ Respond ONLY with a valid JSON object matching this schema:
                         onClick={() => setActiveSceneTab(tab.id as any)}
                         className={`text-xs px-3.5 py-2 rounded-xl whitespace-nowrap font-medium transition-all flex items-center gap-2 border ${
                           isActive
-                            ? 'bg-amber-500 text-black font-bold border-amber-400 shadow-[0_0_12px_rgba(245,158,11,0.25)]'
+                            ? selectedVideoStyle === 'neon-cyber'
+                              ? 'bg-cyan-400 text-black font-bold border-cyan-300 shadow-[0_0_15px_rgba(6,182,212,0.35)]'
+                              : 'bg-amber-500 text-black font-bold border-amber-400 shadow-[0_0_12px_rgba(245,158,11,0.25)]'
                             : 'bg-white/5 text-neutral-400 border-white/5 hover:bg-white/10 hover:text-neutral-200'
                         }`}
                       >
-                        <Film className={`w-3.5 h-3.5 ${isActive ? 'text-black' : 'text-neutral-500'}`} />
+                        {selectedVideoStyle === 'neon-cyber' ? (
+                          <Zap className={`w-3.5 h-3.5 ${isActive ? 'text-black' : 'text-neutral-500'}`} />
+                        ) : (
+                          <Film className={`w-3.5 h-3.5 ${isActive ? 'text-black' : 'text-neutral-500'}`} />
+                        )}
                         <span>{tab.label}</span>
                         <span className={`text-[10px] px-1.5 py-0.5 rounded-full ${isActive ? 'bg-black/25 text-black' : 'bg-white/10 text-neutral-400'}`}>
                           {tab.badge}
@@ -868,7 +1061,11 @@ Respond ONLY with a valid JSON object matching this schema:
                   <div className="px-6 py-3.5 bg-[#090a0f] border-b border-white/5 space-y-2.5 text-xs">
                     <div className="flex flex-wrap items-center justify-between gap-2">
                       <div className="flex items-center gap-2">
-                        <span className="font-bold text-amber-400 uppercase tracking-wider text-[11px] bg-amber-500/10 px-2 py-0.5 rounded border border-amber-500/20">
+                        <span className={`font-bold uppercase tracking-wider text-[11px] px-2 py-0.5 rounded border ${
+                          selectedVideoStyle === 'neon-cyber'
+                            ? 'text-cyan-400 bg-cyan-500/10 border-cyan-500/25'
+                            : 'text-amber-400 bg-amber-500/10 border-amber-500/20'
+                        }`}>
                           Timeline: {activeScene.continuity?.timeline_segment || `${activeScene.duration}`}
                         </span>
                         <span className="text-neutral-500">•</span>

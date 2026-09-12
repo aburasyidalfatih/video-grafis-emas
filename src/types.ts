@@ -1,3 +1,19 @@
+export type VideoStyleId = 'neon-cyber' | 'photorealistic';
+
+export interface VideoStyleOption {
+  id: VideoStyleId;
+  name: string;
+  badge: string;
+  tagline: string;
+  description: string;
+  accent: 'cyan' | 'amber';
+  visual_aesthetic: string;
+  color_palette: string;
+  render_and_lighting: string;
+  sample_labels: string[];
+  sample_sfx: string[];
+}
+
 export interface StyleConsistency {
   visual_aesthetic: string;
   color_palette: string;
