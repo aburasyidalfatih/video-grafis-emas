@@ -218,8 +218,8 @@ export default function App() {
         - Retention Hook in Scene 1: Scene 1 MUST start with an immediate high-impact curiosity hook in the first 1-2 seconds (e.g., extreme macro reveal of raw gold trapped in jagged riverbed cracks under sunlight caustics).`;
 
       const response = await generateWithFallback(ai, `You are an expert cinematic director for viral, ${isNeon ? 'high-tech 3D infographic' : 'photorealistic short-form educational'} videos (TikTok/Reels/Shorts).
-        Based on the following idea, create a detailed, highly visual video concept structured exactly into 3 sequential scenes (8 seconds each, 24 seconds total).
-        Write the descriptions in English for high-end AI video generators (Runway Gen-3, Sora, Kling, Veo).
+        Based on the following idea, create a detailed, highly visual video concept structured exactly into 3 sequential scenes (10 seconds each, 30 seconds total, optimized for Omni Gemini Video).
+        Write the descriptions in English for high-end AI video generators (Omni Gemini Video, Runway Gen-3, Sora, Kling, Veo).
 
         ${styleInstruction}
 
@@ -230,7 +230,7 @@ export default function App() {
 
         CRITICAL VOICE-OVER PERSONA CONSISTENCY:
         - Consistent Narrator Persona across all 3 scenes: "${activePersonaObj.name}" (${activePersonaObj.gender_tone}).
-        - Word budget per scene: strictly 18 to 22 words so the voice-over pacing is natural, deliberate, and fits perfectly in 8 seconds.
+        - Word budget per scene: strictly 22 to 26 words so the voice-over pacing is natural, deliberate, and fits perfectly in 10 seconds (Omni Gemini Video standard).
 
         Idea: ${idea}
         
@@ -239,13 +239,13 @@ export default function App() {
         
         1. Scene 1 (The Hook):
            - Visuals: [Detailed visual description emphasizing ${isNeon ? 'ultra-modern 3D motion graphics, glowing gold, cyan telemetry,' : 'tangible macro geology, natural lighting,'} and an immediate visual hook...]
-           - Voice Over: [Spoken hook script by ${activePersonaObj.name} strictly 18-22 words grabbing attention in the first 2 seconds...]
+           - Voice Over: [Spoken hook script by ${activePersonaObj.name} strictly 22-26 words grabbing attention in the first 2 seconds...]
         2. Scene 2 (The Core):
            - Visuals: [Detailed visual description demonstrating the physical mechanism or geological principle...]
-           - Voice Over: [Spoken script by ${activePersonaObj.name} strictly 18-22 words...]
+           - Voice Over: [Spoken script by ${activePersonaObj.name} strictly 22-26 words...]
         3. Scene 3 (The Loop):
            - Visuals: [Detailed visual description concluding the insight and ending in a camera position that loops into Scene 1...]
-           - Voice Over: [Spoken script by ${activePersonaObj.name} strictly 18-22 words...]`);
+           - Voice Over: [Spoken script by ${activePersonaObj.name} strictly 22-26 words...]`);
 
       if (response.text) {
         setTopic(response.text);
@@ -271,15 +271,15 @@ export default function App() {
       const ai = getAiInstance();
 
       const response = await generateWithFallback(ai, `You are an elite AI video generation prompt engineer and ${isNeon ? '3D motion graphics director specializing in high-tech viral infographics' : 'cinematic documentary director'}.
-Create a production payload for a viral, ${isNeon ? 'ultra-modern 3D infographic' : 'photorealistic cinematic documentary'} 3-scene educational video based on the following topic.
+Create a production payload for a viral, ${isNeon ? 'ultra-modern 3D infographic' : 'photorealistic cinematic documentary'} 3-scene educational video based on the following topic (optimized for Omni Gemini Video, 10 seconds per scene, 30 seconds total).
 
 Topic: ${topic}
 
 CRITICAL RULES:
 1. Return a single JSON object with THREE root keys: "scenes", "social_media_caption", and "hashtags".
-2. "scenes" MUST be an array of EXACTLY 3 sequential scenes (Scene 1: Hook, Scene 2: Core, Scene 3: Loop), 8 seconds each.
+2. "scenes" MUST be an array of EXACTLY 3 sequential scenes (Scene 1: Hook, Scene 2: Core, Scene 3: Loop), 10 seconds each (30 seconds total duration for Omni Gemini Video).
 3. PURITY OF VIDEO PROMPT: Inside "scenes", DO NOT include any social media captions, hashtags, project titles, marketing copy, or emojis. Every scene object must be strictly technical AI video generator instructions.
-4. UNIFORM SCHEMA: Each scene in "scenes" MUST have the EXACT SAME uniform JSON structure so each scene can be used independently by Runway Gen-3, Sora, Kling, Veo, or Luma.
+4. UNIFORM SCHEMA: Each scene in "scenes" MUST have the EXACT SAME uniform JSON structure so each scene can be used independently by Omni Gemini Video, Runway Gen-3, Sora, Kling, Veo, or Luma.
 5. STYLE CONSISTENCY (${isNeon ? 'SIGNATURE NEON 3D INFOGRAPHIC' : 'PHOTOREALISTIC DOCUMENTARY'}):
    - Every scene must share the exact same locked aesthetic, color palette, and render parameters in its "style_consistency" object.
    - "visual_aesthetic": "${activeStyleObj.visual_aesthetic}"
@@ -294,9 +294,9 @@ CRITICAL RULES:
     - Every scene MUST use the EXACT SAME narrator character for seamless audio continuity:
       * "persona": "${activePersonaObj.name}"
       * "tone_and_delivery": "${activePersonaObj.gender_tone}"
-      * "speaking_rate": "135 WPM (~2.3 words/sec, max 22 words for 8s)"
+      * "speaking_rate": "135 WPM (~2.25 words/sec, max 26 words for 10s)"
       * "recommended_tts": "${activePersonaObj.tts}"
-      * "script": Spoken English narration script strictly budgeted to 18-22 words for 8 seconds.
+      * "script": Spoken English narration script strictly budgeted to 22-26 words for 10 seconds.
     - Monologue Flow: The voice-over scripts across Scene 1, 2, and 3 must connect naturally as one cohesive, compelling monologue.
 11. LANGUAGE: All output text (prompts, camera moves, text labels, voice-overs, caption) MUST be in English.
 12. "social_media_caption": Write an engaging, high-retention English caption tailored for TikTok, Instagram Reels, and YouTube Shorts (include emojis, curiosity hook, and a quick call-to-action).
@@ -307,7 +307,7 @@ Respond ONLY with a valid JSON object matching this schema:
   "scenes": [
     {
       "scene_number": 1,
-      "duration": "8s",
+      "duration": "10s",
       "visual_prompt": "Detailed generative video prompt in English describing ${isNeon ? '3D visuals, glowing neon accents, isometric motion, and environment...' : 'natural environment, authentic mineral textures, physical fluid hydrodynamics, and realistic lighting...'}",
       "camera_movement": "Specific cinematic camera trajectory instruction in English with immediate dynamic plunge or macro reveal...",
       "style_consistency": {
@@ -316,7 +316,7 @@ Respond ONLY with a valid JSON object matching this schema:
         "render_and_lighting": "${activeStyleObj.render_and_lighting}"
       },
       "continuity": {
-        "timeline_segment": "0:00 - 0:08 (The Hook)",
+        "timeline_segment": "0:00 - 0:10 (The Hook)",
         "visual_anchor": "Establishing baseline ${isNeon ? 'isometric terrain and locked 24k gold luminous material shader' : 'photorealistic riverbed terrain and authentic raw 24k gold mineral luster'}",
         "transition_in": "Instant high-speed plunge into scene grabbing attention in second 1",
         "transition_out": "Camera tilts down smoothly toward a massive submerged river boulder, tracking downstream eddy currents"
@@ -326,14 +326,14 @@ Respond ONLY with a valid JSON object matching this schema:
       "voice_over": {
         "persona": "${activePersonaObj.name}",
         "tone_and_delivery": "${activePersonaObj.gender_tone}",
-        "speaking_rate": "135 WPM (~2.3 words/sec, max 22 words for 8s)",
+        "speaking_rate": "135 WPM (~2.25 words/sec, max 26 words for 10s)",
         "recommended_tts": "${activePersonaObj.tts}",
-        "script": "Spoken curiosity hook in English strictly budgeted to 18-22 words for 8 seconds."
+        "script": "Spoken curiosity hook in English strictly budgeted to 22-26 words for 10 seconds."
       }
     },
     {
       "scene_number": 2,
-      "duration": "8s",
+      "duration": "10s",
       "visual_prompt": "Detailed generative video prompt in English describing ${isNeon ? '3D visuals, glowing neon accents, and fluid mechanics...' : 'natural environment, authentic mineral textures, physical fluid hydrodynamics...'}",
       "camera_movement": "Specific cinematic camera trajectory instruction in English...",
       "style_consistency": {
@@ -342,7 +342,7 @@ Respond ONLY with a valid JSON object matching this schema:
         "render_and_lighting": "${activeStyleObj.render_and_lighting}"
       },
       "continuity": {
-        "timeline_segment": "0:08 - 0:16 (The Core)",
+        "timeline_segment": "0:10 - 0:20 (The Core)",
         "visual_anchor": "Maintains identical ${isNeon ? 'water fluid shaders and bedrock geometry' : 'crystal-clear water caustics and wet bedrock textures'} from Scene 1",
         "transition_in": "Seamless match cut matching downward camera momentum, penetrating water behind boulder",
         "transition_out": "Camera pushes deep into submerged schist crevices where current drops to near zero"
@@ -352,14 +352,14 @@ Respond ONLY with a valid JSON object matching this schema:
       "voice_over": {
         "persona": "${activePersonaObj.name}",
         "tone_and_delivery": "${activePersonaObj.gender_tone}",
-        "speaking_rate": "135 WPM (~2.3 words/sec, max 22 words for 8s)",
+        "speaking_rate": "135 WPM (~2.25 words/sec, max 26 words for 10s)",
         "recommended_tts": "${activePersonaObj.tts}",
-        "script": "Spoken core explanation script in English strictly budgeted to 18-22 words for 8 seconds."
+        "script": "Spoken core explanation script in English strictly budgeted to 22-26 words for 10 seconds."
       }
     },
     {
       "scene_number": 3,
-      "duration": "8s",
+      "duration": "10s",
       "visual_prompt": "Detailed generative video prompt in English describing ${isNeon ? '3D visuals, glowing neon accents, and coarse gold settling...' : 'natural environment, authentic mineral textures, physical fluid hydrodynamics...'}",
       "camera_movement": "Specific cinematic camera trajectory instruction in English...",
       "style_consistency": {
@@ -368,7 +368,7 @@ Respond ONLY with a valid JSON object matching this schema:
         "render_and_lighting": "${activeStyleObj.render_and_lighting}"
       },
       "continuity": {
-        "timeline_segment": "0:16 - 0:24 (The Loop & Payoff)",
+        "timeline_segment": "0:20 - 0:30 (The Loop & Payoff)",
         "visual_anchor": "${isNeon ? 'Continues microscopic view; identical luminous 24k gold reflectance' : 'Extreme macro view of coarse gold nuggets resting in natural schist riffle trap'}",
         "transition_in": "Locks onto deep bedrock crevice trap",
         "transition_out": "Camera swoops upward breaking surface water, re-aligning with Scene 1's starting aerial angle for an infinite visual loop"
@@ -378,9 +378,9 @@ Respond ONLY with a valid JSON object matching this schema:
       "voice_over": {
         "persona": "${activePersonaObj.name}",
         "tone_and_delivery": "${activePersonaObj.gender_tone}",
-        "speaking_rate": "135 WPM (~2.3 words/sec, max 22 words for 8s)",
+        "speaking_rate": "135 WPM (~2.25 words/sec, max 26 words for 10s)",
         "recommended_tts": "${activePersonaObj.tts}",
-        "script": "Spoken payoff script in English strictly budgeted to 18-22 words for 8 seconds ending with loop lead-in."
+        "script": "Spoken payoff script in English strictly budgeted to 22-26 words for 10 seconds ending with loop lead-in."
       }
     }
   ],
@@ -420,18 +420,18 @@ Respond ONLY with a valid JSON object matching this schema:
         const voScript = s.voice_over?.script || s.voice_over_script || '';
         return {
           scene_number: sceneNum,
-          duration: s.duration || '8s',
+          duration: s.duration || '10s',
           visual_prompt: s.visual_prompt || s.visual_description || '',
           camera_movement: s.camera_movement || 'Smooth cinematic tracking camera with natural depth of field.',
           style_consistency: {
-            visual_aesthetic: s.style_consistency?.visual_aesthetic || 'Photorealistic cinematic documentary, 8K ultra-detailed geological simulation, natural physical macro cinematography, authentic mineral and rock textures, grounded tactile realism',
-            color_palette: s.style_consistency?.color_palette || 'Natural raw 24k placer gold (#D4AF37), deep wet slate & bedrock gray (#2A2E35), crystal-clear mountain water (#4A7C59 / #3D5A80), warm natural sunlight (#FFF2B2)',
-            render_and_lighting: s.style_consistency?.render_and_lighting || 'Cinematic 35mm anamorphic lens realism, natural golden hour / dappled water caustics, physically-based rendering (PBR), shallow depth of field, authentic macro lens bokeh'
+            visual_aesthetic: s.style_consistency?.visual_aesthetic || activeStyleObj.visual_aesthetic,
+            color_palette: s.style_consistency?.color_palette || activeStyleObj.color_palette,
+            render_and_lighting: s.style_consistency?.render_and_lighting || activeStyleObj.render_and_lighting
           },
           continuity: {
-            timeline_segment: s.continuity?.timeline_segment || `${(sceneNum - 1) * 8}s - ${sceneNum * 8}s`,
-            visual_anchor: s.continuity?.visual_anchor || 'Locked photorealistic mineral shader and natural riverbed perspective',
-            transition_in: s.continuity?.transition_in || (sceneNum === 1 ? 'Instant dynamic macro plunge into scene' : `Seamless match cut from Scene ${sceneNum - 1}`),
+            timeline_segment: s.continuity?.timeline_segment || `${(sceneNum - 1) * 10}s - ${sceneNum * 10}s`,
+            visual_anchor: s.continuity?.visual_anchor || (isNeon ? 'Locked 24k gold luminous material shader and isometric view' : 'Locked photorealistic mineral shader and natural riverbed perspective'),
+            transition_in: s.continuity?.transition_in || (sceneNum === 1 ? 'Instant dynamic plunge into scene' : `Seamless match cut from Scene ${sceneNum - 1}`),
             transition_out: s.continuity?.transition_out || (sceneNum === 3 ? 'Upward swoop aligning with Scene 1 for seamless infinite loop' : `Camera pushes forward preparing handoff to Scene ${sceneNum + 1}`)
           },
           on_screen_text_labels: Array.isArray(s.on_screen_text_labels) ? s.on_screen_text_labels : [],
@@ -439,7 +439,7 @@ Respond ONLY with a valid JSON object matching this schema:
           voice_over: {
             persona: s.voice_over?.persona || activePersonaObj.name,
             tone_and_delivery: s.voice_over?.tone_and_delivery || activePersonaObj.gender_tone,
-            speaking_rate: s.voice_over?.speaking_rate || '135 WPM (~2.3 words/sec, max 22 words for 8s)',
+            speaking_rate: s.voice_over?.speaking_rate || '135 WPM (~2.25 words/sec, max 26 words for 10s)',
             recommended_tts: s.voice_over?.recommended_tts || activePersonaObj.tts,
             script: voScript
           },
@@ -732,7 +732,7 @@ Respond ONLY with a valid JSON object matching this schema:
                 </label>
               </div>
               <p className="text-xs text-neutral-500 mb-5 ml-11 relative z-10 font-medium">
-                Refine the scene instructions. The AI will strictly format this into 3 scenes of 8 seconds each.
+                Refine the scene instructions. The AI will strictly format this into 3 scenes of 10 seconds each (Omni Gemini Video - 30s total).
               </p>
               <textarea
                 value={topic}
@@ -781,7 +781,7 @@ Respond ONLY with a valid JSON object matching this schema:
                       <Mic className="w-3.5 h-3.5 text-amber-400" />
                       Karakter Voice Over (Konsisten 3 Scene):
                     </span>
-                    <span className="text-[11px] text-amber-400/80 font-mono">18-22 kata / scene (8s)</span>
+                    <span className="text-[11px] text-amber-400/80 font-mono">22-26 kata / scene (10s)</span>
                   </div>
                   <div className="grid grid-cols-1 sm:grid-cols-3 gap-2">
                     {VOICE_PERSONAS.map((vp) => {
@@ -975,8 +975,8 @@ Respond ONLY with a valid JSON object matching this schema:
                     </div>
                     <span className="text-[11px] text-neutral-500 font-medium block mt-0.5">
                       {selectedVideoStyle === 'neon-cyber'
-                        ? '3D Motion Graphics & Cyan Telemetry HUD (8s per Scene)'
-                        : 'Photorealistic 8s Cinematic Scene Prompts for AI Video Generators'}
+                        ? '3D Motion Graphics & Cyan Telemetry HUD (10s per Scene - Omni Gemini Video)'
+                        : 'Photorealistic 10s Cinematic Scene Prompts for Omni Gemini Video'}
                     </span>
                   </div>
                 </div>
@@ -1020,10 +1020,10 @@ Respond ONLY with a valid JSON object matching this schema:
               {scenes && scenes.length > 0 && (
                 <div className="px-6 pt-3 pb-3 border-b border-white/5 bg-[#07080c] flex items-center gap-2 overflow-x-auto custom-scrollbar">
                   {[
-                    { id: 'scene-1', label: 'Scene 1: Hook', badge: '8s' },
-                    { id: 'scene-2', label: 'Scene 2: Core', badge: '8s' },
-                    { id: 'scene-3', label: 'Scene 3: Loop', badge: '8s' },
-                    { id: 'all', label: 'Semua (3 Scenes Array)', badge: '24s' },
+                    { id: 'scene-1', label: 'Scene 1: Hook', badge: '10s' },
+                    { id: 'scene-2', label: 'Scene 2: Core', badge: '10s' },
+                    { id: 'scene-3', label: 'Scene 3: Loop', badge: '10s' },
+                    { id: 'all', label: 'Semua (3 Scenes Array)', badge: '30s' },
                   ].map((tab) => {
                     const isActive = activeSceneTab === tab.id;
                     return (
@@ -1153,9 +1153,9 @@ Respond ONLY with a valid JSON object matching this schema:
                             "{activeScene.voice_over?.script || activeScene.voice_over_script}"
                           </p>
                           <div className="flex items-center justify-between mt-1.5 text-[10px] text-neutral-500">
-                            <span>Pacing: {activeScene.voice_over?.speaking_rate || '~135 WPM (8s)'}</span>
+                            <span>Pacing: {activeScene.voice_over?.speaking_rate || '~135 WPM (10s)'}</span>
                             <span>
-                              ~{(activeScene.voice_over?.script || activeScene.voice_over_script || '').split(/\s+/).filter(Boolean).length} kata (Target: 18-22 kata)
+                              ~{(activeScene.voice_over?.script || activeScene.voice_over_script || '').split(/\s+/).filter(Boolean).length} kata (Target: 22-26 kata)
                             </span>
                           </div>
                         </div>
